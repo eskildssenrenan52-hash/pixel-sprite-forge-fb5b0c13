@@ -1,24 +1,30 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router"
+import { lazy, Suspense, useEffect, useState } from "react"
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+const Game = lazy(() => import("@/components/game/Game"))
+
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Rucoy Offline" },
+      { name: "description", content: "RPG 2D top-down com editor de mundo embutido." },
+      { property: "og:title", content: "Rucoy Offline" },
+      { property: "og:description", content: "RPG 2D top-down com editor de mundo embutido." },
+    ],
+  }),
   component: Index,
-});
+})
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div style={{ width: "100vw", height: "100vh", overflow: "hidden", background: "#06070b" }}>
+      {mounted && (
+        <Suspense fallback={<div style={{ color: "#c9952a", padding: 20, fontFamily: "monospace" }}>Carregando jogo…</div>}>
+          <Game />
+        </Suspense>
+      )}
     </div>
-  );
+  )
 }

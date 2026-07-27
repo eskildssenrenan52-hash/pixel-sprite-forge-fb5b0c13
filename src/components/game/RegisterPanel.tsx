@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import heroAsset from '@/assets/title-hero-pixel.png.asset.json'
 
-import logoAsset from '@/assets/rucoy-logoAsset.url-pixel.png.asset.json'
+import logoAsset from '@/assets/rucoy-logo-pixel.png.asset.json'
 import { supabase } from '@/integrations/supabase/client'
 
 interface RegisterPanelProps {

@@ -86,5 +86,8 @@ export function hasOwnPortrait(_cls: CharacterClass): boolean {
   return true
 }
 
-export const AI_GEMINI_PORTRAITS_SHEET = ''
-export const AI_GEMINI_SKINS_SHEET = ''
+export { CLASS_SHEETS, SKIN_SHEETS, classFrame, skinFrame, drawSheetSprite } from './spriteSheets'
+import { CLASS_SHEETS, SKIN_SHEETS } from './spriteSheets'
+
+export const AI_GEMINI_PORTRAITS_SHEET = CLASS_SHEETS[0]
+export const AI_GEMINI_SKINS_SHEET = SKIN_SHEETS[0]

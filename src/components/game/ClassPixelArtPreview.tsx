@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CharacterClass } from '@/lib/game/types'
 import { drawCharacter } from '@/lib/game/sprites'
+import { classFrame, skinFrame, drawSheetSprite, loadSheetImage } from '@/lib/game/spriteSheets'
 
 interface Props {
   cls: CharacterClass
@@ -12,6 +13,18 @@ interface Props {
 
 export default function ClassPixelArtPreview({ cls, color, poseName, skin = 0 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [, setTick] = useState(0)
+
+  // Garante repaint quando o sprite sheet terminar de carregar.
+  useEffect(() => {
+    const f = skinFrame(cls as string, skin) ?? classFrame(cls as string)
+    if (!f) return
+    const img = loadSheetImage(f.url)
+    if (img.complete && img.naturalWidth > 0) return
+    const on = () => setTick((t) => t + 1)
+    img.addEventListener('load', on)
+    return () => img.removeEventListener('load', on)
+  }, [cls, skin])
 
   useEffect(() => {
     const canvas = canvasRef.current

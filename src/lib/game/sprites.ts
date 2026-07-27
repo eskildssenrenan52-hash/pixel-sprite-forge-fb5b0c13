@@ -2,6 +2,7 @@
 import type { CharacterClass, Direction, MonsterType, TileType, MinionType } from './types'
 import { drawExtendedMonster } from './extendedSprites'
 import { isExtendedType } from './extendedMonsters'
+import { classFrame, skinFrame, drawSheetSprite } from './spriteSheets'
 
 const S = 32 // tile size
 
@@ -1456,6 +1457,21 @@ export function drawCharacter(
   scale: number = 1,
   skin: number = 0,
 ) {
+  // Sprites de pixel art gerados por IA (sheets com grid fixo).
+  const sheet = skinFrame(cls as string, skin) ?? classFrame(cls as string)
+  if (sheet) {
+    ctx.save()
+    if (direction === 'left') {
+      ctx.translate(x + 16 * scale, 0)
+      ctx.scale(-1, 1)
+      ctx.translate(-(x + 16 * scale), 0)
+    }
+    const bob = isMoving ? (Math.floor(animFrame / 4) % 2 === 0 ? -1 * scale : 0) : 0
+    const drawn = drawSheetSprite(ctx, sheet, x - 4 * scale, y - 8 * scale + bob, 40 * scale)
+    ctx.restore()
+    if (drawn) return
+  }
+
   ctx.save()
   ctx.translate(x + 16 * scale, y + 16 * scale)
   if (direction === 'left') ctx.scale(-1, 1)

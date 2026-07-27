@@ -96,18 +96,14 @@ export default function ClassPixelArtPreview({ cls, color, poseName, skin = 0 }:
     const charX = w / 2 - 16 * scale
     const charY = h / 2 - 40
 
-    drawCharacter(
-      ctx,
-      cls,
-      'down',
-      false,
-      false,
-      animFrame,
-      charX,
-      charY,
-      scale,
-      skin
-    )
+    // Sprite gerado por IA (sheet com grid fixo); fallback: renderizador procedural.
+    const frame = skinFrame(cls as string, skin) ?? classFrame(cls as string)
+    const drawn = frame
+      ? drawSheetSprite(ctx, frame, w / 2 - 90, h / 2 - 100, 180)
+      : false
+    if (!drawn) {
+      drawCharacter(ctx, cls, 'down', false, false, animFrame, charX, charY, scale, skin)
+    }
 
     // Draw Pose Label Tag at bottom
     ctx.fillStyle = 'rgba(0, 0, 0, 0.75)'

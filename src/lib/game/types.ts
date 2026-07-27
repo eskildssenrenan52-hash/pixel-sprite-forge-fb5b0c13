@@ -3,7 +3,7 @@ export type CharacterClass = string
 export type Direction = 'up' | 'down' | 'left' | 'right'
 
 export type TileType =
-  | 'grass' | 'dirt' | 'stone' | 'water' | 'deepwater'
+  | 'grass' | 'dirt' | 'stone' | 'water' | 'deepwater' | 'campfire'
   | 'sand' | 'snow' | 'lava' | 'wall' | 'floor'
   | 'tree' | 'rock' | 'chest' | 'portal'
   | 'dungeon_floor' | 'dungeon_wall' | 'dungeon_brick'

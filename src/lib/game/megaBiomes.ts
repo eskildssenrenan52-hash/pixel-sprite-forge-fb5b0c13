@@ -249,6 +249,7 @@ interface MegaSpec {
   pattern: Pattern
   pal: Palette
   pool: MonsterType[]
+  boss?: MonsterType
   W?: number
   H?: number
   packs?: number

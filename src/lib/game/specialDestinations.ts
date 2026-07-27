@@ -1,4 +1,5 @@
-import type { GameMap, Tile, TileType, Monster, Vec2, NPC } from './types'
+import type { GameMap, Tile, TileType, Monster, Vec2 } from './types'
+import type { NPC } from './npcs'
 import { createMonster } from './monsterFactory'
 
 function mkTile(type: TileType): Tile {

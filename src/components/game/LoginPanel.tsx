@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
-import heroBg from '@/assets/title-hero.jpg'
-import logo from '@/assets/rucoy-logo.png'
+import heroAsset from '@/assets/title-hero-pixel.png.asset.json'
+
+import logoAsset from '@/assets/rucoy-logoAsset.url-pixel.png.asset.json'
 import { supabase } from '@/integrations/supabase/client'
 
 interface LoginPanelProps {
@@ -52,7 +53,7 @@ export default function LoginPanel({
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: `url(${heroBg})`,
+          backgroundImage: `url(${heroAsset.url})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           imageRendering: 'pixelated',
@@ -75,7 +76,7 @@ export default function LoginPanel({
         {/* Logo */}
         <div className="flex justify-center -mt-2">
           <img
-            src={logo}
+            src={logoAsset.url}
             alt="Rucoy Offline"
             className="w-56 sm:w-64 drop-shadow-2xl"
             style={{ imageRendering: 'pixelated', filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.8))' }}

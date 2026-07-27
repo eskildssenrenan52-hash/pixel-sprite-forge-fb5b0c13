@@ -9,8 +9,9 @@ import { supabase } from '@/integrations/supabase/client'
 import type { Session } from '@supabase/supabase-js'
 import { fetchCloudSlots, upsertCloudSlot, deleteCloudSlot, findFreeSlotIndex, type CloudSlot } from '@/lib/game/cloudSave'
 import { getClassPortrait } from '@/lib/game/portraits'
-import heroBg from '@/assets/title-hero.jpg'
-import rucoyLogo from '@/assets/rucoy-logo.png'
+import heroAsset from '@/assets/title-hero-pixel.png.asset.json'
+
+import logoAsset from '@/assets/rucoy-logo-pixel.png.asset.json'
 
 interface Props {
   onStart: (name: string, cls: CharacterClass, skin: number) => void
@@ -307,7 +308,7 @@ export default function TitleScreen({ onStart, onLoad }: Props) {
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: `url(${heroBg})`,
+          backgroundImage: `url(${heroAsset.url})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           imageRendering: 'pixelated',
@@ -345,7 +346,7 @@ export default function TitleScreen({ onStart, onLoad }: Props) {
         <div className="absolute inset-0 flex flex-col items-center justify-start pt-6 px-4 overflow-y-auto">
           <div className="text-center mb-4 relative">
             <img
-              src={rucoyLogo}
+              src={logoAsset.url}
               alt="Rucoy Offline"
               className="w-72 sm:w-96 mx-auto drop-shadow-2xl"
               style={{

@@ -14,72 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          created_at: string
-          id: string
-          updated_at: string
-          username: string | null
-        }
-        Insert: {
-          created_at?: string
-          id: string
-          updated_at?: string
-          username?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          updated_at?: string
-          username?: string | null
-        }
-        Relationships: []
-      }
-      save_slots: {
-        Row: {
-          character_class: string
-          created_at: string
-          gold: number
-          id: string
-          level: number
-          player_name: string
-          playtime: number
-          save_data: Json | null
-          skin: number
-          slot_index: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          character_class: string
-          created_at?: string
-          gold?: number
-          id?: string
-          level?: number
-          player_name: string
-          playtime?: number
-          save_data?: Json | null
-          skin?: number
-          slot_index: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          character_class?: string
-          created_at?: string
-          gold?: number
-          id?: string
-          level?: number
-          player_name?: string
-          playtime?: number
-          save_data?: Json | null
-          skin?: number
-          slot_index?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never

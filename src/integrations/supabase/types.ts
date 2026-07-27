@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      save_slots: {
+        Row: {
+          character_class: string
+          created_at: string
+          gold: number
+          id: string
+          level: number
+          player_name: string
+          playtime: number
+          save_data: Json
+          skin: number
+          slot_index: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          character_class: string
+          created_at?: string
+          gold?: number
+          id?: string
+          level?: number
+          player_name: string
+          playtime?: number
+          save_data?: Json
+          skin?: number
+          slot_index: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          character_class?: string
+          created_at?: string
+          gold?: number
+          id?: string
+          level?: number
+          player_name?: string
+          playtime?: number
+          save_data?: Json
+          skin?: number
+          slot_index?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

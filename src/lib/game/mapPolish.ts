@@ -188,6 +188,43 @@ export function polishChunk(
         ctx.fillRect(ox, oy, TILE, TILE)
       }
 
+      // ── 3b. variação em escala macro: manchas de umidade, musgo e luz ──
+      if (!solid) {
+        // luz difusa em nuvens grandes (~11 tiles)
+        const lightN = smoothNoise(tx, ty, 11, 3)
+        const la = (lightN - 0.5) * 0.20
+        if (Math.abs(la) > 0.01) {
+          ctx.fillStyle = la > 0 ? `rgba(255,236,196,${la})` : `rgba(12,16,34,${-la * 0.9})`
+          ctx.fillRect(ox, oy, TILE, TILE)
+        }
+        // manchas de umidade escurecidas (~6 tiles)
+        const damp = smoothNoise(tx, ty, 6, 17)
+        if (damp > 0.66) {
+          ctx.fillStyle = `rgba(24,34,54,${(damp - 0.66) * 0.55})`
+          ctx.fillRect(ox, oy, TILE, TILE)
+        }
+        // musgo/liquens em depressões (~4 tiles), só onde há umidade
+        const moss = smoothNoise(tx, ty, 4, 41)
+        if (moss > 0.72 && damp > 0.5) {
+          const a = (moss - 0.72) * 0.75
+          ctx.fillStyle = `rgba(74,112,58,${a})`
+          ctx.fillRect(ox, oy, TILE, TILE)
+          // tufos irregulares nas bordas da mancha
+          ctx.fillStyle = `rgba(96,142,72,${a * 1.2})`
+          for (let i = 0; i < 4; i++) {
+            const px = ox + Math.floor(hash2(tx, ty, 400 + i) * (TILE - 4))
+            const py = oy + Math.floor(hash2(tx, ty, 500 + i) * (TILE - 4))
+            ctx.fillRect(px, py, 2, 2)
+          }
+        }
+        // poeira/areia clara soprada (~8 tiles)
+        const dust = smoothNoise(tx, ty, 8, 73)
+        if (dust > 0.78) {
+          ctx.fillStyle = `rgba(214,190,142,${(dust - 0.78) * 0.5})`
+          ctx.fillRect(ox, oy, TILE, TILE)
+        }
+      }
+
       // ── 4. detalhes finos no chão ──
       if (!solid) {
         const col = avgColorOfType(tile.type)

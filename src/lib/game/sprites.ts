@@ -2,7 +2,7 @@
 import type { CharacterClass, Direction, MonsterType, TileType, MinionType } from './types'
 import { drawExtendedMonster } from './extendedSprites'
 import { isExtendedType } from './extendedMonsters'
-import { classFrame, skinFrame, drawSheetSprite } from './spriteSheets'
+import { classFrame, skinFrame, drawSheetSprite, loadSheetImage, TRAINING_DUMMY_URL } from './spriteSheets'
 
 const S = 32 // tile size
 

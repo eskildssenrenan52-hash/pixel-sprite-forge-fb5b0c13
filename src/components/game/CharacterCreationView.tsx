@@ -4,6 +4,7 @@ import { ALL_100_CLASSES, ClassMeta } from '@/lib/game/hundredClassesData'
 import { ABILITIES, CLASS_ABILITIES, ExtendedAbilityDef } from '@/lib/game/abilities'
 import { getClassPortrait } from '@/lib/game/portraits'
 import { drawCharacter, SKIN_NAMES } from '@/lib/game/sprites'
+import { SKIN_PACKS } from '@/lib/game/spriteSheets'
 import PixelArtIcon64, { IconType64 } from './PixelArtIcons64'
 
 interface Props {
@@ -858,6 +859,37 @@ export default function CharacterCreationView({
                         />
                         <span className="text-[8px] font-bold truncate max-w-[36px] text-[#d4b483]">
                           #{s + 1}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pacotes Temáticos de Skin */}
+                <div className="space-y-1.5 pt-2">
+                  <span className="text-[11px] font-bold text-[#f0c040] uppercase tracking-wider block">
+                    Pacotes Temáticos
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {SKIN_PACKS.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => setSkin(p.skinIndex)}
+                        className={`p-2 rounded-md flex items-center gap-2 transition-all border ${
+                          skin === p.skinIndex
+                            ? 'bg-[#4a2a16] border-[#f0c040] ring-1 ring-[#f0c040]'
+                            : 'bg-[#180c07] border-[#4a2e18] hover:bg-[#2e1a0e]'
+                        }`}
+                      >
+                        <ClassSpriteCanvas
+                          cls={selectedClassId}
+                          skin={p.skinIndex}
+                          tick={tick}
+                          scale={1.4}
+                          pose={poseMode}
+                        />
+                        <span className="text-[10px] font-bold" style={{ color: p.color }}>
+                          {p.name}
                         </span>
                       </button>
                     ))}

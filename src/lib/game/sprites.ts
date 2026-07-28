@@ -3351,6 +3351,27 @@ export function drawMonster(
     case 'ghost':        drawGhostMonster(ctx, isMoving, animFrame); break
     case 'vampire':      drawVampireMonster(ctx, isMoving, animFrame); break
     case 'treant':       drawTreantMonster(ctx, isMoving, animFrame); break
+    case 'training_dummy': {
+      const img = loadSheetImage(TRAINING_DUMMY_URL)
+      const wob = isAttacking ? 0 : Math.sin(animFrame / 6) * 0.6
+      ctx.save()
+      ctx.globalAlpha = 0.3
+      ctx.fillStyle = '#000'
+      ctx.beginPath()
+      ctx.ellipse(16, 30, 11, 4, 0, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.restore()
+      if (img.complete && img.naturalWidth > 0) {
+        ctx.imageSmoothingEnabled = false
+        ctx.drawImage(img, -4 + wob, -10, 40, 42)
+      } else {
+        ctx.fillStyle = '#8b5a2b'
+        ctx.fillRect(13, 6, 6, 22)
+        ctx.fillStyle = '#c8a165'
+        ctx.fillRect(6, 10, 20, 8)
+      }
+      break
+    }
     default:
       if (isExtendedType(type as string)) {
         drawExtendedMonster(ctx, type as string, direction, isMoving, isAttacking, animFrame)

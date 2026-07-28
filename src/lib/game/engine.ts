@@ -102,6 +102,51 @@ export function damageMonster(
     // Validar valores de dano
     if (!Number.isFinite(value) || value < 0) value = Math.max(1, Math.round(Math.abs(value)))
     if (!Number.isFinite(monster.hp)) return state
+
+    // ─── BONECO DE TREINO: indestrutível, concede um pouco de XP por golpe ──
+    if ((monster as { type?: string }).type === 'training_dummy') {
+      const p = state.player
+      const xpGain = Math.max(1, Math.round(p.xpToNext * 0.01 + value * 0.25))
+      let xp = p.xp + xpGain
+      let level = p.level
+      let xpToNext = p.xpToNext
+      const notifications = [...state.notifications]
+      while (xp >= xpToNext) {
+        xp -= xpToNext
+        level++
+        xpToNext = calculateXpToNext(level)
+        notifications.push({ id: uid('lvl'), text: `Level ${level}! Parabens!`, type: 'level', timer: 180 })
+        playSfx('level_up')
+      }
+      playSfx('enemy_hit', 0.4)
+      const dummyDmg: DamageNumber = {
+        id: uid('dmg'),
+        value,
+        x: monster.position.x + 16 + (Math.random() - 0.5) * 10,
+        y: monster.position.y - 8,
+        timer: 60,
+        type: isCrit ? 'crit' : dmgType,
+      }
+      const xpNum: DamageNumber = {
+        id: uid('dmgxp'),
+        value: xpGain,
+        x: monster.position.x + 16,
+        y: monster.position.y - 22,
+        timer: 60,
+        type: 'heal',
+      }
+      const classProgress = {
+        ...p.classProgress,
+        [p.class]: { ...p.classProgress[p.class], xp, xpToNext, level },
+      }
+      return {
+        ...state,
+        player: { ...p, xp, level, xpToNext, classProgress } as Player,
+        damageNumbers: [...state.damageNumbers, dummyDmg, xpNum],
+        particles: addHitParticles([...state.particles], monster.position, dmgType),
+        notifications,
+      }
+    }
     
     const wasAlreadyDead = monster.isDead || monster.hp <= 0
   // Don't return early if monster is dead - allow damage to be applied

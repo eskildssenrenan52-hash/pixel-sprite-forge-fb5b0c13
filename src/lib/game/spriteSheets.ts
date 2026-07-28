@@ -66,10 +66,19 @@ export function classFrame(classId: string): SheetFrame | null {
 
 /** skinIndex 0..9 (tiers Aprendiz -> Supremo Ancestral). */
 export function skinFrame(classId: string, skinIndex: number): SheetFrame | null {
+  if (skinIndex >= 100) return packFrame(classId, Math.floor(skinIndex / 100))
   const row = SKIN_SHEET_CLASS_ORDER.indexOf(classId)
   if (row < 0) return null
   const clamped = Math.max(0, Math.min(SHEET_COLS - 1, skinIndex))
   return frame(SKIN_SHEETS, row * SHEET_COLS + clamped)
+}
+
+/** Pacotes temáticos: mesmo índice de classe do grid principal (10x5, 192px). */
+export function packFrame(classId: string, packId: number): SheetFrame | null {
+  const urls = PACK_SHEETS[packId]
+  if (!urls) return null
+  const index = ALL_100_CLASSES.findIndex((c: { id: string }) => c.id === classId)
+  return frame(urls, index)
 }
 
 const imageCache = new Map<string, HTMLImageElement>()

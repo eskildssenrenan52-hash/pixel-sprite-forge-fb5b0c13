@@ -599,10 +599,10 @@ export default function GameCanvas({ gameState, onCanvasClick }: Props) {
     {
       ctx.globalCompositeOperation = 'lighter'
       const pulse = 0.85 + Math.sin((tick ?? 0) * 0.05) * 0.05
-      const lr = 160 * pulse
+      const lr = 260 * pulse
       const lg = ctx.createRadialGradient(playerScreenX, playerScreenY, 0, playerScreenX, playerScreenY, lr)
-      lg.addColorStop(0, 'rgba(255,220,150,0.18)')
-      lg.addColorStop(0.5, 'rgba(255,200,120,0.07)')
+      lg.addColorStop(0, 'rgba(255,226,166,0.24)')
+      lg.addColorStop(0.45, 'rgba(255,200,120,0.10)')
       lg.addColorStop(1, 'rgba(255,200,120,0)')
       ctx.fillStyle = lg
       ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -694,20 +694,24 @@ export default function GameCanvas({ gameState, onCanvasClick }: Props) {
     // ── Time of day tint ──
     const tod = (gameState as any)._timeOfDay ?? 7200
     const hour = (tod / 14400) * 24
+    const NIGHT_MAX = 0.3
     let nightAlpha = 0
-    if (hour < 5) nightAlpha = 0.5
-    else if (hour < 8) nightAlpha = 0.5 - ((hour - 5) / 3) * 0.5
-    else if (hour >= 18 && hour < 21) nightAlpha = ((hour - 18) / 3) * 0.5
-    else if (hour >= 21) nightAlpha = 0.5
+    if (hour < 5) nightAlpha = NIGHT_MAX
+    else if (hour < 8) nightAlpha = NIGHT_MAX - ((hour - 5) / 3) * NIGHT_MAX
+    else if (hour >= 18 && hour < 21) nightAlpha = ((hour - 18) / 3) * NIGHT_MAX
+    else if (hour >= 21) nightAlpha = NIGHT_MAX
     if (nightAlpha > 0) {
-      // night blue tint
-      ctx.fillStyle = `rgba(8,14,46,${nightAlpha})`
+      // noite azul-luar (mais cinematográfica, sem apagar o cenário)
+      const ng = ctx.createLinearGradient(0, 0, 0, canvas.height)
+      ng.addColorStop(0, `rgba(20,28,74,${nightAlpha})`)
+      ng.addColorStop(1, `rgba(10,16,44,${nightAlpha * 0.85})`)
+      ctx.fillStyle = ng
       ctx.fillRect(0, 0, canvas.width, canvas.height)
       // cut a soft light around the player so night feels like night
       ctx.globalCompositeOperation = 'destination-out'
-      const r = 180
+      const r = 300
       const g = ctx.createRadialGradient(playerScreenX, playerScreenY, 20, playerScreenX, playerScreenY, r)
-      g.addColorStop(0, `rgba(0,0,0,${0.85 * nightAlpha})`)
+      g.addColorStop(0, `rgba(0,0,0,${0.95 * nightAlpha})`)
       g.addColorStop(1, 'rgba(0,0,0,0)')
       ctx.fillStyle = g
       ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -718,14 +722,28 @@ export default function GameCanvas({ gameState, onCanvasClick }: Props) {
       ctx.fillRect(0, 0, canvas.width, canvas.height)
     }
 
+    // ── Color grade cinematográfico ──
+    {
+      ctx.save()
+      ctx.globalCompositeOperation = 'overlay'
+      const cg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
+      cg.addColorStop(0, 'rgba(255,196,120,0.10)')
+      cg.addColorStop(0.5, 'rgba(255,255,255,0.02)')
+      cg.addColorStop(1, 'rgba(70,120,200,0.12)')
+      ctx.fillStyle = cg
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.restore()
+    }
+
     // ── Vignette (post-process) ──
     {
       const vg = ctx.createRadialGradient(
-        canvas.width / 2, canvas.height / 2, Math.min(canvas.width, canvas.height) * 0.35,
+        canvas.width / 2, canvas.height / 2, Math.min(canvas.width, canvas.height) * 0.45,
         canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) * 0.75,
       )
       vg.addColorStop(0, 'rgba(0,0,0,0)')
-      vg.addColorStop(1, 'rgba(0,0,0,0.55)')
+      vg.addColorStop(0.6, 'rgba(0,0,0,0.10)')
+      vg.addColorStop(1, 'rgba(0,0,0,0.38)')
       ctx.fillStyle = vg
       ctx.fillRect(0, 0, canvas.width, canvas.height)
     }

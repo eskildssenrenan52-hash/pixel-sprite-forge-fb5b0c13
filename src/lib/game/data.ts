@@ -437,6 +437,27 @@ function generateCityMap(): GameMap {
     monsters.push(createMonster(type, level, mx * 32, my * 32, 'normal'))
   }
 
+  // ─── BONECO DE TREINO (praça central) ─────────────────────────────────
+  // Alvo indestrutível que concede um pouco de XP a cada golpe recebido.
+  {
+    const dummy = createMonster('slime', 1, (cx + 4) * 32, cy * 32, 'normal')
+    const d = dummy as unknown as Record<string, unknown>
+    d.id = 'training_dummy_city'
+    d.type = 'training_dummy'
+    d.name = 'Boneco de Treino'
+    d.hp = 999999
+    d.maxHp = 999999
+    d.attack = 0
+    d.defense = 0
+    d.speed = 0
+    d.xpReward = 0
+    d.goldReward = 0
+    d.aggroRange = 0
+    d.attackRange = 0
+    d.drops = []
+    monsters.push(dummy)
+  }
+
   // ─── EXPANSAO: 2 NOVOS BIOMAS GRANDES AO REDOR DA CIDADE ──────────────
   // Norte: PRADARIA SELVAGEM (5 faixas de profundidade, sem portais)
   // Sul:   COSTA SOMBRIA   (5 faixas de profundidade, sem portais)

@@ -12,6 +12,7 @@ import {
   draw3DProjectedShadow,
   drawWetSurfaceReflection,
 } from '@/lib/game/lightingAndWeather'
+import { polishChunk } from '@/lib/game/mapPolish'
 
 const TILE = 32
 const CHUNK_TILES = 20
@@ -857,6 +858,13 @@ function buildChunk(map: any, cx: number, cy: number): ChunkCacheEntry {
         animated.push([tx, ty, tile.type])
       }
     }
+  }
+
+  // Camada de polimento visual (blend de biomas, oclusão, variação, detalhes)
+  try {
+    polishChunk(ctx, map, startTX, startTY, endTX, endTY)
+  } catch {
+    /* nunca quebra o render do mapa */
   }
 
   return { canvas, animated }

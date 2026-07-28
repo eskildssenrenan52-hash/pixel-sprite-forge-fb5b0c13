@@ -20,6 +20,18 @@ function hash2(x: number, y: number, s = 0) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296
 }
 
+// ─── ruído suave (valor interpolado) para variação em escala macro ───────────
+function smoothNoise(x: number, y: number, scale: number, seed = 0) {
+  const fx = x / scale, fy = y / scale
+  const x0 = Math.floor(fx), y0 = Math.floor(fy)
+  const tx = fx - x0, ty = fy - y0
+  const sx = tx * tx * (3 - 2 * tx)
+  const sy = ty * ty * (3 - 2 * ty)
+  const a = hash2(x0, y0, seed), b = hash2(x0 + 1, y0, seed)
+  const c = hash2(x0, y0 + 1, seed), d = hash2(x0 + 1, y0 + 1, seed)
+  return (a + (b - a) * sx) + ((c + (d - c) * sx) - (a + (b - a) * sx)) * sy
+}
+
 // ─── cor média por tipo de tile (amostrada do renderer real) ─────────────────
 const avgCache = new Map<string, { r: number; g: number; b: number; a: number } | null>()
 let scratch: HTMLCanvasElement | null = null

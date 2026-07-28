@@ -6,6 +6,11 @@ import classes1 from '@/assets/sheets/classes_1.png.asset.json'
 import classes2 from '@/assets/sheets/classes_2.png.asset.json'
 import skins1 from '@/assets/sheets/skins_1.png.asset.json'
 import skins2 from '@/assets/sheets/skins_2.png.asset.json'
+import aurora1 from '@/assets/sheets/pack_aurora_1.png.asset.json'
+import aurora2 from '@/assets/sheets/pack_aurora_2.png.asset.json'
+import inferno1 from '@/assets/sheets/pack_inferno_1.png.asset.json'
+import inferno2 from '@/assets/sheets/pack_inferno_2.png.asset.json'
+import dummy from '@/assets/sheets/training_dummy.png.asset.json'
 import { ALL_100_CLASSES } from './hundredClassesData'
 
 export const SHEET_COLS = 10
@@ -15,6 +20,19 @@ export const SHEET_PER_IMAGE = SHEET_COLS * SHEET_ROWS // 50
 
 export const CLASS_SHEETS = [classes1.url, classes2.url]
 export const SKIN_SHEETS = [skins1.url, skins2.url]
+
+/** Pacotes temáticos de skin: cobrem TODAS as 100 classes (50 por imagem). */
+export const PACK_SHEETS: Record<number, string[]> = {
+  1: [aurora1.url, aurora2.url],
+  2: [inferno1.url, inferno2.url],
+}
+
+export const SKIN_PACKS = [
+  { id: 1, skinIndex: 100, name: 'Aurora Celestial', color: '#ffe9a8' },
+  { id: 2, skinIndex: 200, name: 'Inferno Obsidiana', color: '#ff5a1f' },
+]
+
+export const TRAINING_DUMMY_URL = dummy.url
 
 /** Ordem das classes-base das folhas de skins (5 classes por folha, 10 skins por linha). */
 export const SKIN_SHEET_CLASS_ORDER = [

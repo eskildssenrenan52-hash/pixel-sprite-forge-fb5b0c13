@@ -774,6 +774,31 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
   // 5. Spawn Monsters Across All 150 Biomes & Open Wilderness (Optimized Density)
   const monsters: Monster[] = []
 
+  // 5a. Bonecos de treino no pátio da Capital (indestrutíveis, dão XP por golpe)
+  const dummySpots: Array<[number, number]> = [
+    [yardX - 1, yardY - 1],
+    [yardX + 1, yardY - 1],
+    [yardX, yardY + 1],
+  ]
+  dummySpots.forEach(([dxTile, dyTile], i) => {
+    const dummy = createMonster('slime', 1, dxTile * 32, dyTile * 32, 'normal')
+    const d = dummy as unknown as Record<string, unknown>
+    d.id = `training_dummy_capital_${i}`
+    d.type = 'training_dummy'
+    d.name = 'Boneco de Treino'
+    d.hp = 999999
+    d.maxHp = 999999
+    d.attack = 0
+    d.defense = 0
+    d.speed = 0
+    d.xpReward = 0
+    d.goldReward = 0
+    d.aggroRange = 0
+    d.attackRange = 0
+    d.drops = []
+    monsters.push(dummy)
+  })
+
   // A) Biome-specific distributed packs (1 to 2 small clusters per biome max to prevent lag)
   for (const reg of OPEN_WORLD_REGIONS) {
     if (reg.id === 'city' || !reg.mobPool || reg.mobPool.length === 0) continue

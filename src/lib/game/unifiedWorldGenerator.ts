@@ -922,7 +922,13 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
     musicTheme: 'city',
     npcs: [
       { id: 'npc_merchant', name: 'Mercador Real', x: (CENTER + 3) * 32, y: (CENTER + 3) * 32, shopItems: [] },
-      { id: 'npc_guide', name: 'Mestre Explorador', x: (CENTER - 3) * 32, y: (CENTER - 3) * 32, shopItems: [] }
+      { id: 'npc_guide', name: 'Mestre Explorador', x: (CENTER - 3) * 32, y: (CENTER - 3) * 32, shopItems: [] },
+      { id: 'npc_blacksmith', name: 'Ferreiro Aldric', x: (CENTER - 19) * 32, y: (CENTER - 7) * 32, shopItems: [] },
+      { id: 'npc_banker', name: 'Banqueiro Real', x: (CENTER + 19) * 32, y: (CENTER - 7) * 32, shopItems: [] },
+      { id: 'npc_alchemist', name: 'Alquimista Vera', x: (CENTER - 19) * 32, y: (CENTER + 10) * 32, shopItems: [] },
+      { id: 'npc_guildmaster', name: 'Mestre da Guilda', x: (CENTER + 19) * 32, y: (CENTER + 10) * 32, shopItems: [] },
+      { id: 'npc_trainer', name: 'Instrutor de Combate', x: (CENTER + 11) * 32, y: (CENTER - 14) * 32, shopItems: [] },
+      { id: 'npc_stablemaster', name: 'Tratador de Montarias', x: (CENTER - 8) * 32, y: (CENTER + 19) * 32, shopItems: [] }
     ],
     spawns: [{ x: CENTER * 32, y: CENTER * 32 }],
     spawnPoints: [{ x: CENTER * 32, y: CENTER * 32 }],

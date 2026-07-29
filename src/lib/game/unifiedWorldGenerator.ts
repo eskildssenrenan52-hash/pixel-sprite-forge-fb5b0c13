@@ -68,7 +68,7 @@ function buildHouse(tiles: Tile[][], x0: number, y0: number, w: number, h: numbe
   }
   const doorX = Math.round(x0 + w / 2)
   const doorY = CENTER > y0 ? y0 + h - 1 : y0
-  if (tiles[doorY]?.[doorX]) tiles[doorY][doorX] = makeTile('wood_floor')
+  if (tiles[doorY]?.[doorX]) tiles[doorY][doorX] = makeTile('floor')
   // Lamparinas ladeando a porta
   if (tiles[doorY]?.[doorX - 2]) tiles[doorY][doorX - 2] = makeTile('lamp_post')
   if (tiles[doorY]?.[doorX + 2]) tiles[doorY][doorX + 2] = makeTile('lamp_post')

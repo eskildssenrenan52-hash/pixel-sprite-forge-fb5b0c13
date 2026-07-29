@@ -58,6 +58,24 @@ function buildPortalHall(tiles: Tile[][], px: number, py: number, portal: TileTy
 }
 
 /** Casa/estabelecimento com paredes, telhado e uma porta voltada ao centro. */
+/** Abre um caminho caminhável de 1 tile (4-conectado) entre dois pontos,
+ *  atravessando qualquer parede que esteja bloqueando. Nunca sobrescreve
+ *  portais, escadas ou a fonte central. */
+const CARVE_KEEP = new Set<string>([
+  'fountain', 'stairs_down', 'stairs_up',
+])
+function carvePath(tiles: Tile[][], x0: number, y0: number, x1: number, y1: number) {
+  let x = x0, y = y0
+  let guard = 0
+  while ((x !== x1 || y !== y1) && guard++ < 2000) {
+    const t = tiles[y]?.[x]
+    if (t && !CARVE_KEEP.has(t.type) && !t.type.includes('portal')) {
+      tiles[y][x] = makeTile('cobblestone')
+    }
+    if (x !== x1 && (Math.abs(x1 - x) >= Math.abs(y1 - y) || y === y1)) x += Math.sign(x1 - x)
+    else if (y !== y1) y += Math.sign(y1 - y)
+  }
+}
 function buildHouse(tiles: Tile[][], x0: number, y0: number, w: number, h: number) {
   for (let y = y0; y < y0 + h; y++) {
     for (let x = x0; x < x0 + w; x++) {

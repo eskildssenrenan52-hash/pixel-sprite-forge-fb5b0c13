@@ -32,6 +32,39 @@ export const SKIN_PACKS = [
   { id: 2, skinIndex: 200, name: 'Inferno Obsidiana', color: '#ff5a1f' },
 ]
 
+/**
+ * 10 pacotes temáticos adicionais: recolorização determinística das folhas
+ * de classe (grid idêntico, nenhum alinhamento é alterado).
+ */
+export interface TintTheme {
+  id: number
+  skinIndex: number
+  name: string
+  color: string
+  filter: string
+  blend: GlobalCompositeOperation
+  alpha: number
+}
+
+export const TINT_PACKS: TintTheme[] = [
+  { id: 3,  skinIndex: 300,  name: 'Esmeralda Silvestre', color: '#22c55e', filter: 'hue-rotate(95deg) saturate(1.5) brightness(1.02)', blend: 'overlay', alpha: 0.32 },
+  { id: 4,  skinIndex: 400,  name: 'Safira Abissal',      color: '#2563eb', filter: 'hue-rotate(190deg) saturate(1.4)',                  blend: 'overlay', alpha: 0.38 },
+  { id: 5,  skinIndex: 500,  name: 'Ametista Arcana',     color: '#a855f7', filter: 'hue-rotate(255deg) saturate(1.45) brightness(1.05)', blend: 'overlay', alpha: 0.36 },
+  { id: 6,  skinIndex: 600,  name: 'Rubi Sangrento',      color: '#dc2626', filter: 'hue-rotate(-25deg) saturate(1.6) contrast(1.08)',    blend: 'overlay', alpha: 0.4  },
+  { id: 7,  skinIndex: 700,  name: 'Ouro Imperial',       color: '#f5c518', filter: 'hue-rotate(35deg) saturate(1.5) brightness(1.12)',   blend: 'overlay', alpha: 0.34 },
+  { id: 8,  skinIndex: 800,  name: 'Gelo Polar',          color: '#7dd3fc', filter: 'hue-rotate(160deg) saturate(0.85) brightness(1.18)', blend: 'lighten', alpha: 0.3  },
+  { id: 9,  skinIndex: 900,  name: 'Sombra Vazia',        color: '#111827', filter: 'saturate(0.35) brightness(0.62) contrast(1.25)',     blend: 'multiply', alpha: 0.45 },
+  { id: 10, skinIndex: 1000, name: 'Bronze Antigo',       color: '#b45309', filter: 'sepia(0.65) saturate(1.35) brightness(0.98)',        blend: 'overlay', alpha: 0.35 },
+  { id: 11, skinIndex: 1100, name: 'Néon Espectral',      color: '#22d3ee', filter: 'hue-rotate(140deg) saturate(2) contrast(1.15) brightness(1.1)', blend: 'color-dodge', alpha: 0.22 },
+  { id: 12, skinIndex: 1200, name: 'Rosa Floral',         color: '#f472b6', filter: 'hue-rotate(300deg) saturate(1.5) brightness(1.08)',  blend: 'overlay', alpha: 0.34 },
+]
+
+export const ALL_SKIN_PACKS = [...SKIN_PACKS, ...TINT_PACKS.map(t => ({ id: t.id, skinIndex: t.skinIndex, name: t.name, color: t.color }))]
+
+export function tintThemeForSkin(skinIndex: number): TintTheme | null {
+  return TINT_PACKS.find(t => t.skinIndex === skinIndex) ?? null
+}
+
 export const TRAINING_DUMMY_URL = dummy.url
 
 /** Ordem das classes-base das folhas de skins (5 classes por folha, 10 skins por linha). */
@@ -45,6 +78,7 @@ export interface SheetFrame {
   sx: number
   sy: number
   size: number
+  tint?: number
 }
 
 function frame(urls: string[], index: number): SheetFrame | null {
@@ -66,6 +100,11 @@ export function classFrame(classId: string): SheetFrame | null {
 
 /** skinIndex 0..9 (tiers Aprendiz -> Supremo Ancestral). */
 export function skinFrame(classId: string, skinIndex: number): SheetFrame | null {
+  const theme = tintThemeForSkin(skinIndex)
+  if (theme) {
+    const f = classFrame(classId)
+    return f ? { ...f, tint: theme.skinIndex } : null
+  }
   if (skinIndex >= 100) return packFrame(classId, Math.floor(skinIndex / 100))
   const row = SKIN_SHEET_CLASS_ORDER.indexOf(classId)
   if (row < 0) return null
@@ -82,6 +121,7 @@ export function packFrame(classId: string, packId: number): SheetFrame | null {
 }
 
 const imageCache = new Map<string, HTMLImageElement>()
+const tintCache = new Map<string, HTMLCanvasElement>()
 
 export function loadSheetImage(url: string): HTMLImageElement {
   let img = imageCache.get(url)
@@ -93,6 +133,39 @@ export function loadSheetImage(url: string): HTMLImageElement {
   return img
 }
 
+/** Gera (e memoiza) uma versão recolorizada de uma folha inteira. */
+function getTintedSheet(url: string, skinIndex: number): HTMLCanvasElement | null {
+  if (typeof document === 'undefined') return null
+  const key = `${url}#${skinIndex}`
+  const cached = tintCache.get(key)
+  if (cached) return cached
+  const theme = tintThemeForSkin(skinIndex)
+  const img = loadSheetImage(url)
+  if (!theme || !img.complete || img.naturalWidth === 0) return null
+
+  const canvas = document.createElement('canvas')
+  canvas.width = img.naturalWidth
+  canvas.height = img.naturalHeight
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+  ctx.imageSmoothingEnabled = false
+  ctx.filter = theme.filter
+  ctx.drawImage(img, 0, 0)
+  ctx.filter = 'none'
+  ctx.globalCompositeOperation = theme.blend
+  ctx.globalAlpha = theme.alpha
+  ctx.fillStyle = theme.color
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.globalAlpha = 1
+  // Mantém a transparência original do sprite
+  ctx.globalCompositeOperation = 'destination-in'
+  ctx.drawImage(img, 0, 0)
+  ctx.globalCompositeOperation = 'source-over'
+
+  tintCache.set(key, canvas)
+  return canvas
+}
+
 /** Desenha o sprite do sheet no canvas (pixel art, sem suavização). */
 export function drawSheetSprite(
   ctx: CanvasRenderingContext2D,
@@ -101,6 +174,14 @@ export function drawSheetSprite(
   dy: number,
   dSize: number,
 ): boolean {
+  if (f.tint) {
+    const tinted = getTintedSheet(f.url, f.tint)
+    if (tinted) {
+      ctx.imageSmoothingEnabled = false
+      ctx.drawImage(tinted, f.sx, f.sy, f.size, f.size, dx, dy, dSize, dSize)
+      return true
+    }
+  }
   const img = loadSheetImage(f.url)
   if (!img.complete || img.naturalWidth === 0) return false
   ctx.imageSmoothingEnabled = false

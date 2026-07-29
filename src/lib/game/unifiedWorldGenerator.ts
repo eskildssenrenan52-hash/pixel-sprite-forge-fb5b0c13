@@ -759,6 +759,11 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
     buildPortalHall(tiles, sp.x, sp.y, sp.type, 2)
   }
 
+  // 4a. Garante rua aberta da praça central até cada portal especial
+  for (const sp of specialPortals) {
+    carvePath(tiles, CENTER, CENTER, sp.x, sp.y)
+  }
+
   // 4b. Place Stairs/Portals in EVERY Biome Center on Open World Map
   for (const reg of OPEN_WORLD_REGIONS) {
     if (reg.id === 'city') continue

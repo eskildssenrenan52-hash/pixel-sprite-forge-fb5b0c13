@@ -764,6 +764,19 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
     carvePath(tiles, CENTER, CENTER, sp.x, sp.y)
   }
 
+  // 4a-bis. Reabre as ruas até os 8 salões externos (os salões especiais
+  // construídos acima podem ter fechado o trecho interno da avenida)
+  for (let a = 0; a < 8; a++) {
+    const ang = (a * Math.PI) / 4
+    carvePath(
+      tiles,
+      CENTER,
+      CENTER,
+      Math.round(CENTER + Math.cos(ang) * portalRadius),
+      Math.round(CENTER + Math.sin(ang) * portalRadius),
+    )
+  }
+
   // 4b. Place Stairs/Portals in EVERY Biome Center on Open World Map
   for (const reg of OPEN_WORLD_REGIONS) {
     if (reg.id === 'city') continue

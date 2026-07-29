@@ -23,6 +23,57 @@ function makeTile(type: TileType): Tile {
   return cached
 }
 
+/** Constrói um salão fechado com paredes e uma entrada voltada para o centro,
+ *  com o portal indicado no meio. */
+function buildPortalHall(tiles: Tile[][], px: number, py: number, portal: TileType, radius: number) {
+  if (!tiles[py]?.[px]) return
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const row = tiles[py + dy]
+      if (!row || !row[px + dx]) continue
+      const isEdge = Math.abs(dx) === radius || Math.abs(dy) === radius
+      row[px + dx] = makeTile(isEdge ? 'house_wall' : 'ancient_tile')
+    }
+  }
+  // Entrada apontando para a praça central
+  const vx = CENTER - px
+  const vy = CENTER - py
+  const horizontal = Math.abs(vx) >= Math.abs(vy)
+  const ex = horizontal ? px + Math.sign(vx) * radius : px
+  const ey = horizontal ? py : py + Math.sign(vy) * radius
+  if (tiles[ey]?.[ex]) tiles[ey][ex] = makeTile('cobblestone')
+  if (horizontal) {
+    if (tiles[ey - 1]?.[ex]) tiles[ey - 1][ex] = makeTile('cobblestone')
+    if (tiles[ey + 1]?.[ex]) tiles[ey + 1][ex] = makeTile('cobblestone')
+  } else {
+    if (tiles[ey]?.[ex - 1]) tiles[ey][ex - 1] = makeTile('cobblestone')
+    if (tiles[ey]?.[ex + 1]) tiles[ey][ex + 1] = makeTile('cobblestone')
+  }
+  // Lamparinas nos cantos internos + portal no centro
+  const c = radius - 1
+  for (const [ox, oy] of [[-c, -c], [c, -c], [-c, c], [c, c]] as [number, number][]) {
+    if (tiles[py + oy]?.[px + ox]) tiles[py + oy][px + ox] = makeTile('lamp_post')
+  }
+  tiles[py][px] = makeTile(portal)
+}
+
+/** Casa/estabelecimento com paredes, telhado e uma porta voltada ao centro. */
+function buildHouse(tiles: Tile[][], x0: number, y0: number, w: number, h: number) {
+  for (let y = y0; y < y0 + h; y++) {
+    for (let x = x0; x < x0 + w; x++) {
+      if (!tiles[y]?.[x]) continue
+      const isEdge = x === x0 || y === y0 || x === x0 + w - 1 || y === y0 + h - 1
+      tiles[y][x] = makeTile(isEdge ? 'house_wall' : 'house_roof')
+    }
+  }
+  const doorX = Math.round(x0 + w / 2)
+  const doorY = CENTER > y0 ? y0 + h - 1 : y0
+  if (tiles[doorY]?.[doorX]) tiles[doorY][doorX] = makeTile('wood_floor')
+  // Lamparinas ladeando a porta
+  if (tiles[doorY]?.[doorX - 2]) tiles[doorY][doorX - 2] = makeTile('lamp_post')
+  if (tiles[doorY]?.[doorX + 2]) tiles[doorY][doorX + 2] = makeTile('lamp_post')
+}
+
 function hashStr(s: string): number {
   let h = 2166136261 >>> 0
   for (let i = 0; i < s.length; i++) {

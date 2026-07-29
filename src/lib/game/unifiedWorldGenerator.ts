@@ -377,22 +377,30 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
 
       // C) Capital City Hub Plaza (Center 240, 240)
       if (distFromCenter < 24) {
-        if (distFromCenter < 10) {
+        const rx = x - CENTER
+        const ry = y - CENTER
+        const ang = Math.atan2(ry, rx)
+        // Ruas radiais (8 avenidas) + 2 anéis viários
+        const onAvenue = Math.abs(Math.sin(ang * 4)) < 0.06
+        const onRing = Math.abs(distFromCenter - 9) < 1.2 || Math.abs(distFromCenter - 19) < 1.2
+
+        if (distFromCenter < 3) {
+          // Grande fonte central
+          tiles[y][x] = makeTile(distFromCenter < 1.2 ? 'fountain' : 'garden')
+        } else if (onAvenue || onRing || distFromCenter < 5) {
           tiles[y][x] = makeTile('cobblestone')
-        } else if (distFromCenter < 18) {
-          // Plaza features
-          if ((x === CENTER - 5 || x === CENTER + 5) && (y === CENTER - 5 || y === CENTER + 5)) {
-            tiles[y][x] = makeTile('fountain')
-          } else if ((x % 6 === 0) && (y % 6 === 0)) {
-            tiles[y][x] = makeTile('lamp_post')
-          } else if (x % 4 === 0 && y % 4 === 0 && distFromCenter > 13) {
-            tiles[y][x] = makeTile('market_stall')
-          } else {
-            tiles[y][x] = makeTile('cobblestone')
-          }
+        } else if (distFromCenter < 12) {
+          // Praça cívica ajardinada com lamparinas nos cantos dos quarteirões
+          if ((x % 5 === 0) && (y % 5 === 0)) tiles[y][x] = makeTile('lamp_post')
+          else tiles[y][x] = makeTile((x + y) % 4 === 0 ? 'garden' : 'cobblestone')
+        } else if (distFromCenter < 19) {
+          // Distrito comercial: bancas de mercado alinhadas em quarteirões
+          if (x % 3 === 0 && y % 3 === 0) tiles[y][x] = makeTile('market_stall')
+          else tiles[y][x] = makeTile('cobblestone')
         } else {
-          // City garden edge
-          tiles[y][x] = makeTile((x + y) % 3 === 0 ? 'garden' : 'cobblestone')
+          // Cinturão verde com cercas
+          if ((x + y) % 7 === 0) tiles[y][x] = makeTile('fence')
+          else tiles[y][x] = makeTile((x * y) % 3 === 0 ? 'garden' : 'grass')
         }
         continue
       }
@@ -626,15 +634,39 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
     const ang = (a * Math.PI) / 4
     const px = Math.round(CENTER + Math.cos(ang) * portalRadius)
     const py = Math.round(CENTER + Math.sin(ang) * portalRadius)
-    if (tiles[py] && tiles[py][px]) {
-      tiles[py][px] = makeTile(plazaPortalTypes[a] || 'portal')
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (dx === 0 && dy === 0) continue
-          if (tiles[py + dy]?.[px + dx]) {
-            tiles[py + dy][px + dx] = makeTile('cobblestone')
-          }
-        }
+    buildPortalHall(tiles, px, py, plazaPortalTypes[a] || 'portal', 3)
+  }
+
+  // 3b. Rua de acesso ligando cada salão de portal à praça central
+  for (let a = 0; a < 8; a++) {
+    const ang = (a * Math.PI) / 4
+    for (let d = 4; d <= portalRadius; d++) {
+      const rx = Math.round(CENTER + Math.cos(ang) * d)
+      const ry = Math.round(CENTER + Math.sin(ang) * d)
+      if (tiles[ry]?.[rx] && tiles[ry][rx].type !== 'house_wall') tiles[ry][rx] = makeTile('cobblestone')
+    }
+  }
+
+  // 3c. Quarteirões de construções da cidade (casas, ferraria, guilda, banco)
+  const cityBlocks: Array<{ x: number; y: number; w: number; h: number }> = [
+    { x: CENTER - 22, y: CENTER - 11, w: 6, h: 5 },
+    { x: CENTER - 22, y: CENTER + 6, w: 6, h: 5 },
+    { x: CENTER + 16, y: CENTER - 11, w: 6, h: 5 },
+    { x: CENTER + 16, y: CENTER + 6, w: 6, h: 5 },
+    { x: CENTER - 11, y: CENTER - 22, w: 5, h: 6 },
+    { x: CENTER + 6, y: CENTER - 22, w: 5, h: 6 },
+    { x: CENTER - 11, y: CENTER + 16, w: 5, h: 6 },
+    { x: CENTER + 6, y: CENTER + 16, w: 5, h: 6 },
+  ]
+  for (const b of cityBlocks) buildHouse(tiles, b.x, b.y, b.w, b.h)
+
+  // 3d. Pátio de treinamento (nordeste da praça)
+  const yardX = CENTER + 11, yardY = CENTER - 11
+  for (let dy = -3; dy <= 3; dy++) {
+    for (let dx = -3; dx <= 3; dx++) {
+      if (tiles[yardY + dy]?.[yardX + dx]) {
+        const edge = Math.abs(dx) === 3 || Math.abs(dy) === 3
+        tiles[yardY + dy][yardX + dx] = makeTile(edge && !(dx === 0 && dy === 3) ? 'fence' : 'dirt')
       }
     }
   }
@@ -654,16 +686,7 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
   ]
 
   for (const sp of specialPortals) {
-    if (tiles[sp.y]?.[sp.x]) {
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (tiles[sp.y + dy]?.[sp.x + dx]) {
-            tiles[sp.y + dy][sp.x + dx] = makeTile('cobblestone')
-          }
-        }
-      }
-      tiles[sp.y][sp.x] = makeTile(sp.type)
-    }
+    buildPortalHall(tiles, sp.x, sp.y, sp.type, 2)
   }
 
   // 4b. Place Stairs/Portals in EVERY Biome Center on Open World Map

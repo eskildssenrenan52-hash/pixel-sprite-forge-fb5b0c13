@@ -23,6 +23,57 @@ function makeTile(type: TileType): Tile {
   return cached
 }
 
+/** Constrói um salão fechado com paredes e uma entrada voltada para o centro,
+ *  com o portal indicado no meio. */
+function buildPortalHall(tiles: Tile[][], px: number, py: number, portal: TileType, radius: number) {
+  if (!tiles[py]?.[px]) return
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const row = tiles[py + dy]
+      if (!row || !row[px + dx]) continue
+      const isEdge = Math.abs(dx) === radius || Math.abs(dy) === radius
+      row[px + dx] = makeTile(isEdge ? 'house_wall' : 'ancient_tile')
+    }
+  }
+  // Entrada apontando para a praça central
+  const vx = CENTER - px
+  const vy = CENTER - py
+  const horizontal = Math.abs(vx) >= Math.abs(vy)
+  const ex = horizontal ? px + Math.sign(vx) * radius : px
+  const ey = horizontal ? py : py + Math.sign(vy) * radius
+  if (tiles[ey]?.[ex]) tiles[ey][ex] = makeTile('cobblestone')
+  if (horizontal) {
+    if (tiles[ey - 1]?.[ex]) tiles[ey - 1][ex] = makeTile('cobblestone')
+    if (tiles[ey + 1]?.[ex]) tiles[ey + 1][ex] = makeTile('cobblestone')
+  } else {
+    if (tiles[ey]?.[ex - 1]) tiles[ey][ex - 1] = makeTile('cobblestone')
+    if (tiles[ey]?.[ex + 1]) tiles[ey][ex + 1] = makeTile('cobblestone')
+  }
+  // Lamparinas nos cantos internos + portal no centro
+  const c = radius - 1
+  for (const [ox, oy] of [[-c, -c], [c, -c], [-c, c], [c, c]] as [number, number][]) {
+    if (tiles[py + oy]?.[px + ox]) tiles[py + oy][px + ox] = makeTile('lamp_post')
+  }
+  tiles[py][px] = makeTile(portal)
+}
+
+/** Casa/estabelecimento com paredes, telhado e uma porta voltada ao centro. */
+function buildHouse(tiles: Tile[][], x0: number, y0: number, w: number, h: number) {
+  for (let y = y0; y < y0 + h; y++) {
+    for (let x = x0; x < x0 + w; x++) {
+      if (!tiles[y]?.[x]) continue
+      const isEdge = x === x0 || y === y0 || x === x0 + w - 1 || y === y0 + h - 1
+      tiles[y][x] = makeTile(isEdge ? 'house_wall' : 'house_roof')
+    }
+  }
+  const doorX = Math.round(x0 + w / 2)
+  const doorY = CENTER > y0 ? y0 + h - 1 : y0
+  if (tiles[doorY]?.[doorX]) tiles[doorY][doorX] = makeTile('floor')
+  // Lamparinas ladeando a porta
+  if (tiles[doorY]?.[doorX - 2]) tiles[doorY][doorX - 2] = makeTile('lamp_post')
+  if (tiles[doorY]?.[doorX + 2]) tiles[doorY][doorX + 2] = makeTile('lamp_post')
+}
+
 function hashStr(s: string): number {
   let h = 2166136261 >>> 0
   for (let i = 0; i < s.length; i++) {
@@ -377,22 +428,30 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
 
       // C) Capital City Hub Plaza (Center 240, 240)
       if (distFromCenter < 24) {
-        if (distFromCenter < 10) {
+        const rx = x - CENTER
+        const ry = y - CENTER
+        const ang = Math.atan2(ry, rx)
+        // Ruas radiais (8 avenidas) + 2 anéis viários
+        const onAvenue = Math.abs(Math.sin(ang * 4)) < 0.06
+        const onRing = Math.abs(distFromCenter - 9) < 1.2 || Math.abs(distFromCenter - 19) < 1.2
+
+        if (distFromCenter < 3) {
+          // Grande fonte central
+          tiles[y][x] = makeTile(distFromCenter < 1.2 ? 'fountain' : 'garden')
+        } else if (onAvenue || onRing || distFromCenter < 5) {
           tiles[y][x] = makeTile('cobblestone')
-        } else if (distFromCenter < 18) {
-          // Plaza features
-          if ((x === CENTER - 5 || x === CENTER + 5) && (y === CENTER - 5 || y === CENTER + 5)) {
-            tiles[y][x] = makeTile('fountain')
-          } else if ((x % 6 === 0) && (y % 6 === 0)) {
-            tiles[y][x] = makeTile('lamp_post')
-          } else if (x % 4 === 0 && y % 4 === 0 && distFromCenter > 13) {
-            tiles[y][x] = makeTile('market_stall')
-          } else {
-            tiles[y][x] = makeTile('cobblestone')
-          }
+        } else if (distFromCenter < 12) {
+          // Praça cívica ajardinada com lamparinas nos cantos dos quarteirões
+          if ((x % 5 === 0) && (y % 5 === 0)) tiles[y][x] = makeTile('lamp_post')
+          else tiles[y][x] = makeTile((x + y) % 4 === 0 ? 'garden' : 'cobblestone')
+        } else if (distFromCenter < 19) {
+          // Distrito comercial: bancas de mercado alinhadas em quarteirões
+          if (x % 3 === 0 && y % 3 === 0) tiles[y][x] = makeTile('market_stall')
+          else tiles[y][x] = makeTile('cobblestone')
         } else {
-          // City garden edge
-          tiles[y][x] = makeTile((x + y) % 3 === 0 ? 'garden' : 'cobblestone')
+          // Cinturão verde com cercas
+          if ((x + y) % 7 === 0) tiles[y][x] = makeTile('fence')
+          else tiles[y][x] = makeTile((x * y) % 3 === 0 ? 'garden' : 'grass')
         }
         continue
       }
@@ -626,15 +685,39 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
     const ang = (a * Math.PI) / 4
     const px = Math.round(CENTER + Math.cos(ang) * portalRadius)
     const py = Math.round(CENTER + Math.sin(ang) * portalRadius)
-    if (tiles[py] && tiles[py][px]) {
-      tiles[py][px] = makeTile(plazaPortalTypes[a] || 'portal')
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (dx === 0 && dy === 0) continue
-          if (tiles[py + dy]?.[px + dx]) {
-            tiles[py + dy][px + dx] = makeTile('cobblestone')
-          }
-        }
+    buildPortalHall(tiles, px, py, plazaPortalTypes[a] || 'portal', 3)
+  }
+
+  // 3b. Rua de acesso ligando cada salão de portal à praça central
+  for (let a = 0; a < 8; a++) {
+    const ang = (a * Math.PI) / 4
+    for (let d = 4; d <= portalRadius; d++) {
+      const rx = Math.round(CENTER + Math.cos(ang) * d)
+      const ry = Math.round(CENTER + Math.sin(ang) * d)
+      if (tiles[ry]?.[rx] && tiles[ry][rx].type !== 'house_wall') tiles[ry][rx] = makeTile('cobblestone')
+    }
+  }
+
+  // 3c. Quarteirões de construções da cidade (casas, ferraria, guilda, banco)
+  const cityBlocks: Array<{ x: number; y: number; w: number; h: number }> = [
+    { x: CENTER - 22, y: CENTER - 11, w: 6, h: 5 },
+    { x: CENTER - 22, y: CENTER + 6, w: 6, h: 5 },
+    { x: CENTER + 16, y: CENTER - 11, w: 6, h: 5 },
+    { x: CENTER + 16, y: CENTER + 6, w: 6, h: 5 },
+    { x: CENTER - 11, y: CENTER - 22, w: 5, h: 6 },
+    { x: CENTER + 6, y: CENTER - 22, w: 5, h: 6 },
+    { x: CENTER - 11, y: CENTER + 16, w: 5, h: 6 },
+    { x: CENTER + 6, y: CENTER + 16, w: 5, h: 6 },
+  ]
+  for (const b of cityBlocks) buildHouse(tiles, b.x, b.y, b.w, b.h)
+
+  // 3d. Pátio de treinamento (nordeste da praça)
+  const yardX = CENTER + 11, yardY = CENTER - 11
+  for (let dy = -3; dy <= 3; dy++) {
+    for (let dx = -3; dx <= 3; dx++) {
+      if (tiles[yardY + dy]?.[yardX + dx]) {
+        const edge = Math.abs(dx) === 3 || Math.abs(dy) === 3
+        tiles[yardY + dy][yardX + dx] = makeTile(edge && !(dx === 0 && dy === 3) ? 'fence' : 'dirt')
       }
     }
   }
@@ -654,16 +737,7 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
   ]
 
   for (const sp of specialPortals) {
-    if (tiles[sp.y]?.[sp.x]) {
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (tiles[sp.y + dy]?.[sp.x + dx]) {
-            tiles[sp.y + dy][sp.x + dx] = makeTile('cobblestone')
-          }
-        }
-      }
-      tiles[sp.y][sp.x] = makeTile(sp.type)
-    }
+    buildPortalHall(tiles, sp.x, sp.y, sp.type, 2)
   }
 
   // 4b. Place Stairs/Portals in EVERY Biome Center on Open World Map
@@ -699,6 +773,31 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
 
   // 5. Spawn Monsters Across All 150 Biomes & Open Wilderness (Optimized Density)
   const monsters: Monster[] = []
+
+  // 5a. Bonecos de treino no pátio da Capital (indestrutíveis, dão XP por golpe)
+  const dummySpots: Array<[number, number]> = [
+    [yardX - 1, yardY - 1],
+    [yardX + 1, yardY - 1],
+    [yardX, yardY + 1],
+  ]
+  dummySpots.forEach(([dxTile, dyTile], i) => {
+    const dummy = createMonster('slime', 1, dxTile * 32, dyTile * 32, 'normal')
+    const d = dummy as unknown as Record<string, unknown>
+    d.id = `training_dummy_capital_${i}`
+    d.type = 'training_dummy'
+    d.name = 'Boneco de Treino'
+    d.hp = 999999
+    d.maxHp = 999999
+    d.attack = 0
+    d.defense = 0
+    d.speed = 0
+    d.xpReward = 0
+    d.goldReward = 0
+    d.aggroRange = 0
+    d.attackRange = 0
+    d.drops = []
+    monsters.push(dummy)
+  })
 
   // A) Biome-specific distributed packs (1 to 2 small clusters per biome max to prevent lag)
   for (const reg of OPEN_WORLD_REGIONS) {
@@ -823,7 +922,13 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
     musicTheme: 'city',
     npcs: [
       { id: 'npc_merchant', name: 'Mercador Real', x: (CENTER + 3) * 32, y: (CENTER + 3) * 32, shopItems: [] },
-      { id: 'npc_guide', name: 'Mestre Explorador', x: (CENTER - 3) * 32, y: (CENTER - 3) * 32, shopItems: [] }
+      { id: 'npc_guide', name: 'Mestre Explorador', x: (CENTER - 3) * 32, y: (CENTER - 3) * 32, shopItems: [] },
+      { id: 'npc_blacksmith', name: 'Ferreiro Aldric', x: (CENTER - 19) * 32, y: (CENTER - 7) * 32, shopItems: [] },
+      { id: 'npc_banker', name: 'Banqueiro Real', x: (CENTER + 19) * 32, y: (CENTER - 7) * 32, shopItems: [] },
+      { id: 'npc_alchemist', name: 'Alquimista Vera', x: (CENTER - 19) * 32, y: (CENTER + 10) * 32, shopItems: [] },
+      { id: 'npc_guildmaster', name: 'Mestre da Guilda', x: (CENTER + 19) * 32, y: (CENTER + 10) * 32, shopItems: [] },
+      { id: 'npc_trainer', name: 'Instrutor de Combate', x: (CENTER + 11) * 32, y: (CENTER - 14) * 32, shopItems: [] },
+      { id: 'npc_stablemaster', name: 'Tratador de Montarias', x: (CENTER - 8) * 32, y: (CENTER + 19) * 32, shopItems: [] }
     ],
     spawns: [{ x: CENTER * 32, y: CENTER * 32 }],
     spawnPoints: [{ x: CENTER * 32, y: CENTER * 32 }],

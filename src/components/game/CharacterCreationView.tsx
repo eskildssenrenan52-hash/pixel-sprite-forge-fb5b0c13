@@ -4,7 +4,7 @@ import { ALL_100_CLASSES, ClassMeta } from '@/lib/game/hundredClassesData'
 import { ABILITIES, CLASS_ABILITIES, ExtendedAbilityDef } from '@/lib/game/abilities'
 import { getClassPortrait } from '@/lib/game/portraits'
 import { drawCharacter, SKIN_NAMES } from '@/lib/game/sprites'
-import { SKIN_PACKS } from '@/lib/game/spriteSheets'
+import { ALL_SKIN_PACKS as SKIN_PACKS } from '@/lib/game/spriteSheets'
 import PixelArtIcon64, { IconType64 } from './PixelArtIcons64'
 
 interface Props {

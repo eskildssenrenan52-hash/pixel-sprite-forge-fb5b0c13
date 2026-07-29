@@ -709,11 +709,10 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
   // 3b. Rua de acesso ligando cada salão de portal à praça central
   for (let a = 0; a < 8; a++) {
     const ang = (a * Math.PI) / 4
-    for (let d = 4; d <= portalRadius; d++) {
-      const rx = Math.round(CENTER + Math.cos(ang) * d)
-      const ry = Math.round(CENTER + Math.sin(ang) * d)
-      if (tiles[ry]?.[rx] && tiles[ry][rx].type !== 'house_wall') tiles[ry][rx] = makeTile('cobblestone')
-    }
+    const px = Math.round(CENTER + Math.cos(ang) * portalRadius)
+    const py = Math.round(CENTER + Math.sin(ang) * portalRadius)
+    // Abre a rua da praça até a porta do salão, atravessando qualquer parede
+    carvePath(tiles, CENTER, CENTER, px, py)
   }
 
   // 3c. Quarteirões de construções da cidade (casas, ferraria, guilda, banco)
@@ -729,8 +728,8 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
   ]
   for (const b of cityBlocks) buildHouse(tiles, b.x, b.y, b.w, b.h)
 
-  // 3d. Pátio de treinamento (nordeste da praça)
-  const yardX = CENTER + 11, yardY = CENTER - 11
+  // 3d. Pátio de treinamento (nordeste da praça, fora dos salões de portal)
+  const yardX = CENTER + 18, yardY = CENTER - 18
   for (let dy = -3; dy <= 3; dy++) {
     for (let dx = -3; dx <= 3; dx++) {
       if (tiles[yardY + dy]?.[yardX + dx]) {
@@ -739,6 +738,8 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
       }
     }
   }
+  // Caminho da praça até a entrada do pátio de treino
+  carvePath(tiles, CENTER, CENTER, yardX, yardY + 3)
 
   // 4. Special Destinations & Central Portals in Capital Real Center
   const specialPortals = [

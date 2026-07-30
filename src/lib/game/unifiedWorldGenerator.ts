@@ -141,6 +141,25 @@ function fbm(x: number, y: number, octaves = 4, seed = 2026): number {
 
 export type WeatherType = 'none' | 'rain' | 'storm' | 'snow' | 'fog' | 'sandstorm' | 'ash_fall' | 'aurora'
 
+// ─────────────────────────────────────────────────────────────────────────────
+// AS 4 GRANDES TERRAS AO REDOR DA CAPITAL (estilo Rucoy Online)
+// Oeste: floresta / Leste: deserto / Norte: tundra / Sul: vulcão
+// ─────────────────────────────────────────────────────────────────────────────
+export const GREAT_LANDS = [
+  { side: 'west' as const, id: 'greenwood', name: 'Bosque Esmeralda', weather: 'rain' as WeatherType },
+  { side: 'east' as const, id: 'goldsands', name: 'Dunas Douradas', weather: 'sandstorm' as WeatherType },
+  { side: 'north' as const, id: 'frostreach', name: 'Confins Gelados', weather: 'snow' as WeatherType },
+  { side: 'south' as const, id: 'emberwaste', name: 'Ermos de Brasa', weather: 'ash_fall' as WeatherType },
+]
+
+export function getGreatLandAt(tileX: number, tileY: number) {
+  const dx = tileX - 240
+  const dy = tileY - 240
+  if (Math.hypot(dx, dy) < 28) return null
+  if (Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? GREAT_LANDS[0] : GREAT_LANDS[1]
+  return dy < 0 ? GREAT_LANDS[2] : GREAT_LANDS[3]
+}
+
 export interface BiomeRegion {
   id: string
   name: string

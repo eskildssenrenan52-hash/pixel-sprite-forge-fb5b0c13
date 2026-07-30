@@ -44,6 +44,12 @@ export interface TintTheme {
   filter: string
   blend: GlobalCompositeOperation
   alpha: number
+  /** Gradiente vertical opcional (topo -> base) aplicado sobre o sprite. */
+  gradient?: [string, string]
+  /** Intensidade do gradiente. */
+  gradientAlpha?: number
+  /** Modo de mesclagem do gradiente. */
+  gradientBlend?: GlobalCompositeOperation
 }
 
 export const TINT_PACKS: TintTheme[] = [
@@ -57,6 +63,24 @@ export const TINT_PACKS: TintTheme[] = [
   { id: 10, skinIndex: 1000, name: 'Bronze Antigo',       color: '#b45309', filter: 'sepia(0.65) saturate(1.35) brightness(0.98)',        blend: 'overlay', alpha: 0.35 },
   { id: 11, skinIndex: 1100, name: 'Néon Espectral',      color: '#22d3ee', filter: 'hue-rotate(140deg) saturate(2) contrast(1.15) brightness(1.1)', blend: 'color-dodge', alpha: 0.22 },
   { id: 12, skinIndex: 1200, name: 'Rosa Floral',         color: '#f472b6', filter: 'hue-rotate(300deg) saturate(1.5) brightness(1.08)',  blend: 'overlay', alpha: 0.34 },
+
+  // ─── 8 novos pacotes, cada um com identidade visual própria ───────────────
+  { id: 13, skinIndex: 1300, name: 'Crepúsculo Solar',   color: '#fb923c', filter: 'hue-rotate(20deg) saturate(1.6) brightness(1.06)', blend: 'overlay', alpha: 0.3,
+    gradient: ['#fde68a', '#b91c1c'], gradientAlpha: 0.42, gradientBlend: 'overlay' },
+  { id: 14, skinIndex: 1400, name: 'Maré Abissal',       color: '#0ea5e9', filter: 'hue-rotate(175deg) saturate(1.3) brightness(0.95) contrast(1.1)', blend: 'multiply', alpha: 0.26,
+    gradient: ['#67e8f9', '#083344'], gradientAlpha: 0.45, gradientBlend: 'overlay' },
+  { id: 15, skinIndex: 1500, name: 'Toxina Venenosa',    color: '#84cc16', filter: 'hue-rotate(75deg) saturate(2) contrast(1.2)', blend: 'color-dodge', alpha: 0.2,
+    gradient: ['#bef264', '#365314'], gradientAlpha: 0.4, gradientBlend: 'overlay' },
+  { id: 16, skinIndex: 1600, name: 'Prata Espelhada',    color: '#e2e8f0', filter: 'saturate(0.12) brightness(1.22) contrast(1.3)', blend: 'lighten', alpha: 0.28,
+    gradient: ['#ffffff', '#475569'], gradientAlpha: 0.35, gradientBlend: 'overlay' },
+  { id: 17, skinIndex: 1700, name: 'Cinzas Vulcânicas',  color: '#7f1d1d', filter: 'saturate(0.6) brightness(0.78) contrast(1.35) sepia(0.25)', blend: 'multiply', alpha: 0.4,
+    gradient: ['#f97316', '#171717'], gradientAlpha: 0.5, gradientBlend: 'overlay' },
+  { id: 18, skinIndex: 1800, name: 'Aurora Boreal',      color: '#34d399', filter: 'hue-rotate(130deg) saturate(1.7) brightness(1.12)', blend: 'screen', alpha: 0.22,
+    gradient: ['#a78bfa', '#22d3ee'], gradientAlpha: 0.44, gradientBlend: 'overlay' },
+  { id: 19, skinIndex: 1900, name: 'Realeza Púrpura',    color: '#7c3aed', filter: 'hue-rotate(270deg) saturate(1.55) brightness(0.98)', blend: 'overlay', alpha: 0.4,
+    gradient: ['#f5c518', '#4c1d95'], gradientAlpha: 0.4, gradientBlend: 'overlay' },
+  { id: 20, skinIndex: 2000, name: 'Vazio Estelar',      color: '#1e1b4b', filter: 'saturate(0.5) brightness(0.7) contrast(1.4) hue-rotate(215deg)', blend: 'multiply', alpha: 0.42,
+    gradient: ['#c4b5fd', '#020617'], gradientAlpha: 0.5, gradientBlend: 'overlay' },
 ]
 
 export const ALL_SKIN_PACKS = [...SKIN_PACKS, ...TINT_PACKS.map(t => ({ id: t.id, skinIndex: t.skinIndex, name: t.name, color: t.color }))]
@@ -157,6 +181,16 @@ function getTintedSheet(url: string, skinIndex: number): HTMLCanvasElement | nul
   ctx.fillStyle = theme.color
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   ctx.globalAlpha = 1
+  if (theme.gradient) {
+    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height)
+    grad.addColorStop(0, theme.gradient[0])
+    grad.addColorStop(1, theme.gradient[1])
+    ctx.globalCompositeOperation = theme.gradientBlend ?? 'overlay'
+    ctx.globalAlpha = theme.gradientAlpha ?? 0.4
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.globalAlpha = 1
+  }
   // Mantém a transparência original do sprite
   ctx.globalCompositeOperation = 'destination-in'
   ctx.drawImage(img, 0, 0)

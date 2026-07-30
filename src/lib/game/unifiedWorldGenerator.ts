@@ -141,6 +141,107 @@ function fbm(x: number, y: number, octaves = 4, seed = 2026): number {
 
 export type WeatherType = 'none' | 'rain' | 'storm' | 'snow' | 'fog' | 'sandstorm' | 'ash_fall' | 'aurora'
 
+// ─────────────────────────────────────────────────────────────────────────────
+// AS 4 GRANDES TERRAS AO REDOR DA CAPITAL (estilo Rucoy Online)
+// Oeste: floresta / Leste: deserto / Norte: tundra / Sul: vulcão
+// ─────────────────────────────────────────────────────────────────────────────
+export const GREAT_LANDS = [
+  { side: 'west' as const, id: 'greenwood', name: 'Bosque Esmeralda', weather: 'rain' as WeatherType },
+  { side: 'east' as const, id: 'goldsands', name: 'Dunas Douradas', weather: 'sandstorm' as WeatherType },
+  { side: 'north' as const, id: 'frostreach', name: 'Confins Gelados', weather: 'snow' as WeatherType },
+  { side: 'south' as const, id: 'emberwaste', name: 'Ermos de Brasa', weather: 'ash_fall' as WeatherType },
+]
+
+export function getGreatLandAt(tileX: number, tileY: number) {
+  const dx = tileX - 240
+  const dy = tileY - 240
+  if (Math.hypot(dx, dy) < 28) return null
+  if (Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? GREAT_LANDS[0] : GREAT_LANDS[1]
+  return dy < 0 ? GREAT_LANDS[2] : GREAT_LANDS[3]
+}
+
+/** Reescreve todo o continente (fora da Capital e fora da orla) em 4 grandes
+ *  biomas contíguos, cada um com layout próprio. Preserva água/orla, portais,
+ *  escadas e qualquer tile já construído da cidade. */
+const GREAT_LANDS_KEEP = new Set<TileType>([
+  'deepwater', 'fountain', 'stairs_down', 'stairs_up',
+  'cobblestone', 'house_wall', 'house_roof', 'house_door',
+])
+
+function applyFourGreatLands(tiles: Tile[][], seed: number) {
+  const INNER = 30      // raio protegido da Capital
+  const OUTER = 196     // além disso é orla/oceano gerado organicamente
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const dx = x - CENTER
+      const dy = y - CENTER
+      const dist = Math.hypot(dx, dy)
+      if (dist < INNER || dist > OUTER) continue
+      const cur = tiles[y][x]
+      if (!cur || GREAT_LANDS_KEEP.has(cur.type)) continue
+      if (cur.type.includes('portal') && dist < 40) continue
+
+      const land = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'west' : 'east') : (dy < 0 ? 'north' : 'south')
+      // Faixa de transição suave entre as terras (diagonais)
+      const seam = Math.abs(Math.abs(dx) - Math.abs(dy))
+      const n = fbm(x * 0.06, y * 0.06, 4, seed + 777) - 0.5
+      if (seam < 6 && n > 0.06) continue // mistura orgânica nas fronteiras
+
+      const d = fbm(x * 0.11, y * 0.11, 4, seed + 40) - 0.5   // detalhe fino
+      const m = fbm(x * 0.028, y * 0.028, 3, seed + 91) - 0.5 // macro
+      let t: TileType = 'grass'
+
+      if (land === 'west') {
+        // BOSQUE ESMERALDA — bosques densos, clareiras e trilhas de terra
+        const trail = Math.abs(dy - Math.sin(x * 0.06) * 14) < 1.6 || Math.abs(dy + Math.sin(x * 0.045) * 22) < 1.4
+        if (trail) t = 'dirt'
+        else if (m > 0.14 && d > 0.02) t = 'tree'
+        else if (m > 0.14) t = 'tall_grass'
+        else if (m < -0.16 && d < -0.14) t = 'dark_water'
+        else if (d > 0.16) t = 'tree'
+        else if (d < -0.18) t = 'flower'
+        else if (d < -0.10) t = 'tall_grass'
+        else t = 'grass'
+      } else if (land === 'east') {
+        // DUNAS DOURADAS — cristas de duna, oásis e ruínas soterradas
+        const dune = Math.abs(Math.sin(x * 0.07 + y * 0.035))
+        const oasis = m < -0.22
+        const ruinBlock = (Math.floor(x / 34) + Math.floor(y / 34)) % 3 === 0
+        if (oasis && d < -0.10) t = 'water'
+        else if (oasis) t = 'grass'
+        else if (ruinBlock && x % 34 < 12 && y % 34 < 12) {
+          t = (x % 6 === 0 && y % 6 === 0) ? 'ruin_pillar' : (d > 0.08 ? 'broken_tile' : 'sand')
+        } else if (dune > 0.955) t = 'rock'
+        else if (d > 0.20) t = 'rock'
+        else if (d < -0.16) t = 'dirt'
+        else t = 'sand'
+      } else if (land === 'north') {
+        // CONFINS GELADOS — lagos congelados, cinturões de pinheiros e cristais
+        const lake = m < -0.20
+        const pineBelt = Math.abs(Math.sin(y * 0.09)) > 0.93
+        if (lake && d < 0.05) t = 'ice'
+        else if (pineBelt && d > -0.10) t = 'pine_tree'
+        else if (d > 0.20) t = 'pine_tree'
+        else if (d > 0.10) t = 'snow_rock'
+        else if (d < -0.20) t = 'ice_crystal_node'
+        else if (m > 0.20) t = 'mountain_rock'
+        else t = 'snow'
+      } else {
+        // ERMOS DE BRASA — rios de lava, campos de cinza e cristas de obsidiana
+        const lavaRiver = Math.abs(dx - Math.sin(y * 0.05) * 26) < 1.8 || Math.abs(dx + Math.cos(y * 0.035) * 40) < 1.5
+        if (lavaRiver) t = 'lava'
+        else if (m > 0.18 && d > 0.06) t = 'volcanic_rock'
+        else if (m < -0.18) t = 'ash'
+        else if (d > 0.22) t = 'obsidian'
+        else if (d < -0.20) t = 'volcanic_vent'
+        else t = 'magma_crust'
+      }
+
+      tiles[y][x] = makeTile(t)
+    }
+  }
+}
+
 export interface BiomeRegion {
   id: string
   name: string
@@ -663,6 +764,11 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
       }
     }
   }
+
+  // 1.5 QUATRO GRANDES REGIÕES (estilo Rucoy Online): a Capital fica no centro
+  // e cada lado (oeste, leste, norte, sul) é um bioma gigantesco e coeso, com
+  // organização e estilo próprios.
+  applyFourGreatLands(tiles, seed)
 
   // 2. Build Trade Roads Connecting Capital Real to Major Sector Biome Centers
   for (const reg of OPEN_WORLD_REGIONS) {

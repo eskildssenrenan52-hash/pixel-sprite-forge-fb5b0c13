@@ -664,6 +664,11 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
     }
   }
 
+  // 1.5 QUATRO GRANDES REGIÕES (estilo Rucoy Online): a Capital fica no centro
+  // e cada lado (oeste, leste, norte, sul) é um bioma gigantesco e coeso, com
+  // organização e estilo próprios.
+  applyFourGreatLands(tiles, seed)
+
   // 2. Build Trade Roads Connecting Capital Real to Major Sector Biome Centers
   for (const reg of OPEN_WORLD_REGIONS) {
     if (reg.id === 'city') continue

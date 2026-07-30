@@ -164,9 +164,8 @@ export function getGreatLandAt(tileX: number, tileY: number) {
  *  biomas contíguos, cada um com layout próprio. Preserva água/orla, portais,
  *  escadas e qualquer tile já construído da cidade. */
 const GREAT_LANDS_KEEP = new Set<TileType>([
-  'deepwater', 'water', 'fountain', 'stairs_down', 'stairs_up',
-  'cobblestone', 'house_wall', 'house_roof', 'house_door', 'market_stall',
-  'lamp_post', 'garden', 'fence', 'ancient_tile',
+  'deepwater', 'fountain', 'stairs_down', 'stairs_up',
+  'cobblestone', 'house_wall', 'house_roof', 'house_door',
 ])
 
 function applyFourGreatLands(tiles: Tile[][], seed: number) {
@@ -179,7 +178,8 @@ function applyFourGreatLands(tiles: Tile[][], seed: number) {
       const dist = Math.hypot(dx, dy)
       if (dist < INNER || dist > OUTER) continue
       const cur = tiles[y][x]
-      if (!cur || GREAT_LANDS_KEEP.has(cur.type) || cur.type.includes('portal')) continue
+      if (!cur || GREAT_LANDS_KEEP.has(cur.type)) continue
+      if (cur.type.includes('portal') && dist < 40) continue
 
       const land = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'west' : 'east') : (dy < 0 ? 'north' : 'south')
       // Faixa de transição suave entre as terras (diagonais)

@@ -542,8 +542,8 @@ function buildAllOpenWorldRegions(): BiomeRegion[] {
       cy = Math.round(CENTER + Math.sin(pushAng) * 36)
     }
 
-    const distFromCapital = Math.hypot(cx - CENTER, cy - CENTER)
-    const scaledLevel = getDistanceScaledLevel(distFromCapital, item.minLevel)
+    // Nível da região = faixa fixa do bioma onde ela caiu
+    const scaledLevel = getBiomeLevelRange(cx, cy).min
 
     list.push({
       id: item.id,

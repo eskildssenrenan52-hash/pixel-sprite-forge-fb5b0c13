@@ -142,8 +142,10 @@ function fbm(x: number, y: number, octaves = 4, seed = 2026): number {
 export type WeatherType = 'none' | 'rain' | 'storm' | 'snow' | 'fog' | 'sandstorm' | 'ash_fall' | 'aurora'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AS 4 GRANDES TERRAS AO REDOR DA CAPITAL (estilo Rucoy Online)
-// Oeste: floresta / Leste: deserto / Norte: tundra / Sul: vulcão
+// MOSAICO DE BIOMAS ESTILO RUCOY ONLINE
+// O mundo é um tabuleiro de blocos RETANGULARES de tamanho parecido (mas com
+// larguras/alturas irregulares), com bordas bem recortadas. Um mesmo bioma
+// nunca aparece em mais de 2 blocos vizinhos em linha/coluna.
 // ─────────────────────────────────────────────────────────────────────────────
 export const GREAT_LANDS = [
   { side: 'west' as const, id: 'greenwood', name: 'Bosque Esmeralda', weather: 'rain' as WeatherType },
@@ -152,17 +154,106 @@ export const GREAT_LANDS = [
   { side: 'south' as const, id: 'emberwaste', name: 'Ermos de Brasa', weather: 'ash_fall' as WeatherType },
 ]
 
-export function getGreatLandAt(tileX: number, tileY: number) {
-  const dx = tileX - 240
-  const dy = tileY - 240
-  if (Math.hypot(dx, dy) < 28) return null
-  if (Math.abs(dx) >= Math.abs(dy)) return dx < 0 ? GREAT_LANDS[0] : GREAT_LANDS[1]
-  return dy < 0 ? GREAT_LANDS[2] : GREAT_LANDS[3]
+export type BiomeKindId =
+  | 'greenwood' | 'goldsands' | 'frostreach' | 'emberwaste'
+  | 'mirebog' | 'plains' | 'ruins' | 'crystal'
+
+export const BIOME_KINDS: { id: BiomeKindId; name: string; weather: WeatherType }[] = [
+  { id: 'greenwood',  name: 'Bosque Esmeralda',  weather: 'rain' },
+  { id: 'goldsands',  name: 'Dunas Douradas',    weather: 'sandstorm' },
+  { id: 'frostreach', name: 'Confins Gelados',   weather: 'snow' },
+  { id: 'emberwaste', name: 'Ermos de Brasa',    weather: 'ash_fall' },
+  { id: 'mirebog',    name: 'Pântano Sombrio',   weather: 'fog' },
+  { id: 'plains',     name: 'Campos Abertos',    weather: 'none' },
+  { id: 'ruins',      name: 'Ruínas Antigas',    weather: 'none' },
+  { id: 'crystal',    name: 'Ermo Cristalino',   weather: 'aurora' },
+]
+
+/** Cortes irregulares do tabuleiro (blocos ~40-58 tiles). */
+function buildCuts(seed: number, axis: number): number[] {
+  const cuts = [0]
+  let p = 0
+  let i = 0
+  while (p < W - 24) {
+    const r = pseudoNoise(i * 13 + axis * 91, axis * 7, seed + 31)
+    p += Math.round(40 + r * 20)
+    if (p >= W) break
+    cuts.push(p)
+    i++
+  }
+  cuts.push(W)
+  return cuts
 }
 
-/** Reescreve todo o continente (fora da Capital e fora da orla) em 4 grandes
- *  biomas contíguos, cada um com layout próprio. Preserva água/orla, portais,
- *  escadas e qualquer tile já construído da cidade. */
+let cutsCache: { seed: number; xs: number[]; ys: number[]; grid: BiomeKindId[][] } | null = null
+
+function getMosaic(seed: number) {
+  if (cutsCache && cutsCache.seed === seed) return cutsCache
+  const xs = buildCuts(seed, 0)
+  const ys = buildCuts(seed, 1)
+  const cols = xs.length - 1
+  const rows = ys.length - 1
+  const grid: BiomeKindId[][] = []
+  for (let r = 0; r < rows; r++) {
+    grid.push([])
+    for (let c = 0; c < cols; c++) {
+      const banned = new Set<BiomeKindId>()
+      // no máximo 2 blocos iguais conectados em linha
+      if (c >= 2 && grid[r][c - 1] === grid[r][c - 2]) banned.add(grid[r][c - 1])
+      // no máximo 2 blocos iguais conectados em coluna
+      if (r >= 2 && grid[r - 1][c] === grid[r - 2][c]) banned.add(grid[r - 1][c])
+      // evita blocos 2x2 do mesmo bioma (aglomerado > 2)
+      if (r >= 1 && c >= 1 && grid[r - 1][c] === grid[r - 1][c - 1] && grid[r][c - 1] === grid[r - 1][c]) {
+        banned.add(grid[r][c - 1])
+      }
+      const base = Math.floor(pseudoNoise(c * 17 + 3, r * 23 + 5, seed + 512) * BIOME_KINDS.length)
+      let pick = BIOME_KINDS[base % BIOME_KINDS.length].id
+      let k = 0
+      while (banned.has(pick) && k < BIOME_KINDS.length) {
+        pick = BIOME_KINDS[(base + ++k) % BIOME_KINDS.length].id
+      }
+      grid[r][c] = pick
+    }
+  }
+  cutsCache = { seed, xs, ys, grid }
+  return cutsCache
+}
+
+function cellIndex(cuts: number[], v: number): number {
+  for (let i = 0; i < cuts.length - 1; i++) {
+    if (v >= cuts[i] && v < cuts[i + 1]) return i
+  }
+  return Math.max(0, cuts.length - 2)
+}
+
+/** Bioma do mosaico numa posição (com as bordas recortadas já aplicadas). */
+function mosaicKindAt(x: number, y: number, seed: number): BiomeKindId {
+  const { xs, ys, grid } = getMosaic(seed)
+  // Distorção das bordas: recorte bem irregular entre blocos vizinhos
+  const wx = x + (fbm(x * 0.055, y * 0.055, 4, seed + 301) - 0.5) * 26
+    + (fbm(x * 0.17, y * 0.17, 2, seed + 55) - 0.5) * 9
+  const wy = y + (fbm(x * 0.05, y * 0.05, 4, seed + 811) - 0.5) * 26
+    + (fbm(x * 0.19, y * 0.19, 2, seed + 77) - 0.5) * 9
+  const cx = Math.min(Math.max(wx, 0), W - 1)
+  const cy = Math.min(Math.max(wy, 0), H - 1)
+  const c = cellIndex(xs, cx)
+  const r = cellIndex(ys, cy)
+  return grid[r]?.[c] ?? 'plains'
+}
+
+export function getGreatLandAt(tileX: number, tileY: number) {
+  const dx = tileX - CENTER
+  const dy = tileY - CENTER
+  if (Math.hypot(dx, dy) < 28) return null
+  const id = mosaicKindAt(tileX, tileY, 2026)
+  const kind = BIOME_KINDS.find(k => k.id === id)!
+  const side = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'west' : 'east') : (dy < 0 ? 'north' : 'south')
+  return { side: side as 'west' | 'east' | 'north' | 'south', id: kind.id, name: kind.name, weather: kind.weather }
+}
+
+/** Reescreve todo o continente (fora da Capital e fora da orla) no mosaico de
+ *  biomas retangulares irregulares. Preserva água/orla, portais, escadas e
+ *  qualquer tile já construído da cidade. */
 const GREAT_LANDS_KEEP = new Set<TileType>([
   'deepwater', 'fountain', 'stairs_down', 'stairs_up',
   'cobblestone', 'house_wall', 'house_roof', 'house_door',
@@ -181,17 +272,13 @@ function applyFourGreatLands(tiles: Tile[][], seed: number) {
       if (!cur || GREAT_LANDS_KEEP.has(cur.type)) continue
       if (cur.type.includes('portal') && dist < 40) continue
 
-      const land = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'west' : 'east') : (dy < 0 ? 'north' : 'south')
-      // Faixa de transição suave entre as terras (diagonais)
-      const seam = Math.abs(Math.abs(dx) - Math.abs(dy))
-      const n = fbm(x * 0.06, y * 0.06, 4, seed + 777) - 0.5
-      if (seam < 6 && n > 0.06) continue // mistura orgânica nas fronteiras
+      const land = mosaicKindAt(x, y, seed)
 
       const d = fbm(x * 0.11, y * 0.11, 4, seed + 40) - 0.5   // detalhe fino
       const m = fbm(x * 0.028, y * 0.028, 3, seed + 91) - 0.5 // macro
       let t: TileType = 'grass'
 
-      if (land === 'west') {
+      if (land === 'greenwood') {
         // BOSQUE ESMERALDA — bosques densos, clareiras e trilhas de terra
         const trail = Math.abs(dy - Math.sin(x * 0.06) * 14) < 1.6 || Math.abs(dy + Math.sin(x * 0.045) * 22) < 1.4
         if (trail) t = 'dirt'
@@ -202,7 +289,7 @@ function applyFourGreatLands(tiles: Tile[][], seed: number) {
         else if (d < -0.18) t = 'flower'
         else if (d < -0.10) t = 'tall_grass'
         else t = 'grass'
-      } else if (land === 'east') {
+      } else if (land === 'goldsands') {
         // DUNAS DOURADAS — cristas de duna, oásis e ruínas soterradas
         const dune = Math.abs(Math.sin(x * 0.07 + y * 0.035))
         const oasis = m < -0.22
@@ -215,7 +302,7 @@ function applyFourGreatLands(tiles: Tile[][], seed: number) {
         else if (d > 0.20) t = 'rock'
         else if (d < -0.16) t = 'dirt'
         else t = 'sand'
-      } else if (land === 'north') {
+      } else if (land === 'frostreach') {
         // CONFINS GELADOS — lagos congelados, cinturões de pinheiros e cristais
         const lake = m < -0.20
         const pineBelt = Math.abs(Math.sin(y * 0.09)) > 0.93
@@ -226,7 +313,7 @@ function applyFourGreatLands(tiles: Tile[][], seed: number) {
         else if (d < -0.20) t = 'ice_crystal_node'
         else if (m > 0.20) t = 'mountain_rock'
         else t = 'snow'
-      } else {
+      } else if (land === 'emberwaste') {
         // ERMOS DE BRASA — rios de lava, campos de cinza e cristas de obsidiana
         const lavaRiver = Math.abs(dx - Math.sin(y * 0.05) * 26) < 1.8 || Math.abs(dx + Math.cos(y * 0.035) * 40) < 1.5
         if (lavaRiver) t = 'lava'
@@ -235,6 +322,36 @@ function applyFourGreatLands(tiles: Tile[][], seed: number) {
         else if (d > 0.22) t = 'obsidian'
         else if (d < -0.20) t = 'volcanic_vent'
         else t = 'magma_crust'
+      } else if (land === 'mirebog') {
+        // PÂNTANO SOMBRIO — poças escuras, juncos e árvores retorcidas
+        if (m < -0.14 && d < 0.05) t = 'dark_water'
+        else if (d > 0.20) t = 'tree'
+        else if (d > 0.06) t = 'tall_grass'
+        else if (d < -0.18) t = 'mud'
+        else t = 'swamp'
+      } else if (land === 'plains') {
+        // CAMPOS ABERTOS — pradarias amplas com bosques esparsos
+        if (d > 0.26) t = 'tree'
+        else if (d > 0.14) t = 'tall_grass'
+        else if (m < -0.22 && d < -0.10) t = 'water'
+        else if (d < -0.20) t = 'flower'
+        else t = 'grass'
+      } else if (land === 'ruins') {
+        // RUÍNAS ANTIGAS — quarteirões de pedra quebrada e colunas
+        const block = (x % 16 < 11) && (y % 16 < 11)
+        if (block && (x % 16 === 0 || y % 16 === 0)) t = 'ruin_pillar'
+        else if (block && d > 0.12) t = 'ancient_stone'
+        else if (block) t = 'broken_tile'
+        else if (d > 0.20) t = 'rock'
+        else if (d < -0.18) t = 'dirt'
+        else t = 'stone_floor'
+      } else {
+        // ERMO CRISTALINO — planaltos pálidos com veios de cristal
+        if (d > 0.24) t = 'crystal'
+        else if (d > 0.10) t = 'rock'
+        else if (m < -0.20) t = 'ice'
+        else if (d < -0.20) t = 'ice_crystal_node'
+        else t = 'stone_floor'
       }
 
       tiles[y][x] = makeTile(t)

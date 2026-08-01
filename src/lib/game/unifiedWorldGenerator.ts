@@ -251,6 +251,35 @@ export function getGreatLandAt(tileX: number, tileY: number) {
   return { side: side as 'west' | 'east' | 'north' | 'south', id: kind.id, name: kind.name, weather: kind.weather }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// NÍVEIS FIXOS POR BIOMA (a faixa não muda com a distância da Capital)
+// ─────────────────────────────────────────────────────────────────────────────
+export const BIOME_LEVEL_RANGES: Record<BiomeKindId, { min: number; max: number }> = {
+  greenwood:  { min: 1,   max: 5 },
+  plains:     { min: 6,   max: 12 },
+  mirebog:    { min: 13,  max: 22 },
+  goldsands:  { min: 23,  max: 35 },
+  ruins:      { min: 36,  max: 52 },
+  frostreach: { min: 53,  max: 72 },
+  crystal:    { min: 73,  max: 95 },
+  emberwaste: { min: 96,  max: 125 },
+}
+
+/** Faixa fixa de nível do bioma numa posição do mundo. */
+export function getBiomeLevelRange(tileX: number, tileY: number) {
+  if (Math.hypot(tileX - CENTER, tileY - CENTER) <= 28) return { min: 1, max: 1 }
+  const id = mosaicKindAt(tileX, tileY, 2026)
+  return BIOME_LEVEL_RANGES[id] ?? BIOME_LEVEL_RANGES.plains
+}
+
+/** Nível fixo de um monstro nessa posição, determinístico dentro da faixa do bioma. */
+export function getBiomeFixedLevel(tileX: number, tileY: number, salt = 0): number {
+  const { min, max } = getBiomeLevelRange(tileX, tileY)
+  if (max <= min) return min
+  const h = hashStr(`lvl_${tileX}_${tileY}_${salt}`)
+  return min + (h % (max - min + 1))
+}
+
 /** Reescreve todo o continente (fora da Capital e fora da orla) no mosaico de
  *  biomas retangulares irregulares. Preserva água/orla, portais, escadas e
  *  qualquer tile já construído da cidade. */
@@ -513,8 +542,8 @@ function buildAllOpenWorldRegions(): BiomeRegion[] {
       cy = Math.round(CENTER + Math.sin(pushAng) * 36)
     }
 
-    const distFromCapital = Math.hypot(cx - CENTER, cy - CENTER)
-    const scaledLevel = getDistanceScaledLevel(distFromCapital, item.minLevel)
+    // Nível da região = faixa fixa do bioma onde ela caiu
+    const scaledLevel = getBiomeLevelRange(cx, cy).min
 
     list.push({
       id: item.id,
@@ -1087,9 +1116,8 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
           if (tiles[my] && tiles[my][mx] && tiles[my][mx].walkable) {
             const mobType = reg.mobPool[(c + p) % reg.mobPool.length]
 
-            // Calculate exact tile distance from Capital Real
-            const mobTileDist = Math.hypot(mx - CENTER, my - CENTER)
-            const tileLvl = getDistanceScaledLevel(mobTileDist, reg.minLevel)
+            // Nível fixo definido pelo bioma daquela posição
+            const tileLvl = getBiomeFixedLevel(mx, my, c * 7 + p)
 
             let tier: EliteTier = 'normal'
             if (c === 0 && p === 0 && reg.minLevel >= 20 && (hash % 4 === 0)) {
@@ -1133,18 +1161,18 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
       if (jx > 2 && jy > 2 && jx < W - 3 && jy < H - 3) {
         if (tiles[jy] && tiles[jy][jx] && tiles[jy][jx].walkable) {
           let wildMob: MonsterType = 'slime'
-          const wildLvl = getDistanceScaledLevel(distFromCity)
+          const wildLvl = getBiomeFixedLevel(jx, jy)
 
-          if (distFromCity < 45) {
+          if (wildLvl <= 5) {
             const types: MonsterType[] = ['slime', 'goblin', 'wolf']
             wildMob = types[hashStr(`${jx}_${jy}`) % types.length]
-          } else if (distFromCity < 85) {
+          } else if (wildLvl <= 22) {
             const types: MonsterType[] = ['orc', 'skeleton', 'spider', 'zombie']
             wildMob = types[hashStr(`${jx}_${jy}`) % types.length]
-          } else if (distFromCity < 130) {
+          } else if (wildLvl <= 52) {
             const types: MonsterType[] = ['troll', 'witch', 'knight_enemy', 'archer_enemy', 'mage_enemy', 'ghost']
             wildMob = types[hashStr(`${jx}_${jy}`) % types.length]
-          } else if (distFromCity < 170) {
+          } else if (wildLvl <= 95) {
             const types: MonsterType[] = ['demon', 'vampire', 'treant', 'mummy', 'cryomancer', 'pyromancer']
             wildMob = types[hashStr(`${jx}_${jy}`) % types.length]
           } else {
@@ -1153,7 +1181,7 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
           }
 
           const hVal = hashStr(`e_${jx}_${jy}`)
-          const isBoss = (hVal % 50) === 0 && distFromCity > 110
+          const isBoss = (hVal % 50) === 0 && wildLvl >= 36
           const isChamp = !isBoss && (hVal % 16) === 0
           const isElite = !isBoss && !isChamp && (hVal % 7) === 0
           const tier: EliteTier = isBoss ? 'boss' : isChamp ? 'champion' : isElite ? 'elite' : 'normal'

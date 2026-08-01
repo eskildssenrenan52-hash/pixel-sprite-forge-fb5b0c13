@@ -1,6 +1,6 @@
 import { memo, useState } from 'react'
 import type { Player, GameMap, GameNotification, ChatMessage } from '@/lib/game/types'
-import { getDistanceScaledLevel } from '@/lib/game/unifiedWorldGenerator'
+import { getBiomeLevelRange, getGreatLandAt } from '@/lib/game/unifiedWorldGenerator'
 
 interface Props {
   player: Player
@@ -186,7 +186,10 @@ function GameHUD({
           const pyTile = Math.floor((player.position.y + 16) / 32)
           const distFromCapital = Math.round(Math.hypot(pxTile - 240, pyTile - 240))
           const isCapitalCity = currentMap.id === 'city' || currentMap.id === 'unified_world'
-          const zoneLevel = isCapitalCity ? getDistanceScaledLevel(distFromCapital) : (currentMap.monsters?.[0]?.level ?? player.level)
+          const range = getBiomeLevelRange(pxTile, pyTile)
+          const biomeName = getGreatLandAt(pxTile, pyTile)?.name
+          const zoneLevel = isCapitalCity ? range.max : (currentMap.monsters?.[0]?.level ?? player.level)
+          const zoneLabel = isCapitalCity && biomeName ? `${biomeName} Nv ${range.min}-${range.max}` : `Zona Nv ${zoneLevel}`
 
           let dangerTag = { label: 'Capital (Segura)', color: '#4ade80' }
           if (!isCapitalCity) {
@@ -195,11 +198,11 @@ function GameHUD({
             dangerTag = { label: 'Capital (Segura)', color: '#4ade80' }
           } else {
             const diff = zoneLevel - player.level
-            if (diff <= 0) dangerTag = { label: `Fronteira (Nv ${zoneLevel})`, color: '#4ade80' }
-            else if (diff <= 15) dangerTag = { label: `Zona Nv ${zoneLevel}`, color: '#facc15' }
-            else if (diff <= 40) dangerTag = { label: `Perigo Nv ${zoneLevel}`, color: '#f97316' }
-            else if (diff <= 100) dangerTag = { label: `Mortal Nv ${zoneLevel}`, color: '#ef4444' }
-            else dangerTag = { label: `💀 Nv ${zoneLevel}`, color: '#d946ef' }
+            if (diff <= 0) dangerTag = { label: zoneLabel, color: '#4ade80' }
+            else if (diff <= 15) dangerTag = { label: zoneLabel, color: '#facc15' }
+            else if (diff <= 40) dangerTag = { label: zoneLabel, color: '#f97316' }
+            else if (diff <= 100) dangerTag = { label: zoneLabel, color: '#ef4444' }
+            else dangerTag = { label: `💀 ${zoneLabel}`, color: '#d946ef' }
           }
 
           return (

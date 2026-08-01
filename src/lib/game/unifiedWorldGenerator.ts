@@ -1116,9 +1116,8 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
           if (tiles[my] && tiles[my][mx] && tiles[my][mx].walkable) {
             const mobType = reg.mobPool[(c + p) % reg.mobPool.length]
 
-            // Calculate exact tile distance from Capital Real
-            const mobTileDist = Math.hypot(mx - CENTER, my - CENTER)
-            const tileLvl = getDistanceScaledLevel(mobTileDist, reg.minLevel)
+            // Nível fixo definido pelo bioma daquela posição
+            const tileLvl = getBiomeFixedLevel(mx, my, c * 7 + p)
 
             let tier: EliteTier = 'normal'
             if (c === 0 && p === 0 && reg.minLevel >= 20 && (hash % 4 === 0)) {
@@ -1162,18 +1161,18 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
       if (jx > 2 && jy > 2 && jx < W - 3 && jy < H - 3) {
         if (tiles[jy] && tiles[jy][jx] && tiles[jy][jx].walkable) {
           let wildMob: MonsterType = 'slime'
-          const wildLvl = getDistanceScaledLevel(distFromCity)
+          const wildLvl = getBiomeFixedLevel(jx, jy)
 
-          if (distFromCity < 45) {
+          if (wildLvl <= 5) {
             const types: MonsterType[] = ['slime', 'goblin', 'wolf']
             wildMob = types[hashStr(`${jx}_${jy}`) % types.length]
-          } else if (distFromCity < 85) {
+          } else if (wildLvl <= 22) {
             const types: MonsterType[] = ['orc', 'skeleton', 'spider', 'zombie']
             wildMob = types[hashStr(`${jx}_${jy}`) % types.length]
-          } else if (distFromCity < 130) {
+          } else if (wildLvl <= 52) {
             const types: MonsterType[] = ['troll', 'witch', 'knight_enemy', 'archer_enemy', 'mage_enemy', 'ghost']
             wildMob = types[hashStr(`${jx}_${jy}`) % types.length]
-          } else if (distFromCity < 170) {
+          } else if (wildLvl <= 95) {
             const types: MonsterType[] = ['demon', 'vampire', 'treant', 'mummy', 'cryomancer', 'pyromancer']
             wildMob = types[hashStr(`${jx}_${jy}`) % types.length]
           } else {
@@ -1182,7 +1181,7 @@ export function generateUnifiedWorld(seed = 2026): GameMap {
           }
 
           const hVal = hashStr(`e_${jx}_${jy}`)
-          const isBoss = (hVal % 50) === 0 && distFromCity > 110
+          const isBoss = (hVal % 50) === 0 && wildLvl >= 36
           const isChamp = !isBoss && (hVal % 16) === 0
           const isElite = !isBoss && !isChamp && (hVal % 7) === 0
           const tier: EliteTier = isBoss ? 'boss' : isChamp ? 'champion' : isElite ? 'elite' : 'normal'

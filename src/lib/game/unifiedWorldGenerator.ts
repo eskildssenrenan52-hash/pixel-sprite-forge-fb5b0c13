@@ -327,8 +327,8 @@ function applyFourGreatLands(tiles: Tile[][], seed: number) {
         if (m < -0.14 && d < 0.05) t = 'dark_water'
         else if (d > 0.20) t = 'tree'
         else if (d > 0.06) t = 'tall_grass'
-        else if (d < -0.18) t = 'mud'
-        else t = 'swamp'
+        else if (d < -0.18) t = 'dirt'
+        else t = 'mossy_stone'
       } else if (land === 'plains') {
         // CAMPOS ABERTOS — pradarias amplas com bosques esparsos
         if (d > 0.26) t = 'tree'
@@ -340,18 +340,18 @@ function applyFourGreatLands(tiles: Tile[][], seed: number) {
         // RUÍNAS ANTIGAS — quarteirões de pedra quebrada e colunas
         const block = (x % 16 < 11) && (y % 16 < 11)
         if (block && (x % 16 === 0 || y % 16 === 0)) t = 'ruin_pillar'
-        else if (block && d > 0.12) t = 'ancient_stone'
+        else if (block && d > 0.12) t = 'ancient_tile'
         else if (block) t = 'broken_tile'
         else if (d > 0.20) t = 'rock'
         else if (d < -0.18) t = 'dirt'
-        else t = 'stone_floor'
+        else t = 'ruin_floor'
       } else {
         // ERMO CRISTALINO — planaltos pálidos com veios de cristal
         if (d > 0.24) t = 'crystal'
         else if (d > 0.10) t = 'rock'
         else if (m < -0.20) t = 'ice'
         else if (d < -0.20) t = 'ice_crystal_node'
-        else t = 'stone_floor'
+        else t = 'crystal_floor'
       }
 
       tiles[y][x] = makeTile(t)

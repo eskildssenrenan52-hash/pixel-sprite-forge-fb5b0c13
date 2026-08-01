@@ -251,6 +251,35 @@ export function getGreatLandAt(tileX: number, tileY: number) {
   return { side: side as 'west' | 'east' | 'north' | 'south', id: kind.id, name: kind.name, weather: kind.weather }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// NÍVEIS FIXOS POR BIOMA (a faixa não muda com a distância da Capital)
+// ─────────────────────────────────────────────────────────────────────────────
+export const BIOME_LEVEL_RANGES: Record<BiomeKindId, { min: number; max: number }> = {
+  greenwood:  { min: 1,   max: 5 },
+  plains:     { min: 6,   max: 12 },
+  mirebog:    { min: 13,  max: 22 },
+  goldsands:  { min: 23,  max: 35 },
+  ruins:      { min: 36,  max: 52 },
+  frostreach: { min: 53,  max: 72 },
+  crystal:    { min: 73,  max: 95 },
+  emberwaste: { min: 96,  max: 125 },
+}
+
+/** Faixa fixa de nível do bioma numa posição do mundo. */
+export function getBiomeLevelRange(tileX: number, tileY: number) {
+  if (Math.hypot(tileX - CENTER, tileY - CENTER) <= 28) return { min: 1, max: 1 }
+  const id = mosaicKindAt(tileX, tileY, 2026)
+  return BIOME_LEVEL_RANGES[id] ?? BIOME_LEVEL_RANGES.plains
+}
+
+/** Nível fixo de um monstro nessa posição, determinístico dentro da faixa do bioma. */
+export function getBiomeFixedLevel(tileX: number, tileY: number, salt = 0): number {
+  const { min, max } = getBiomeLevelRange(tileX, tileY)
+  if (max <= min) return min
+  const h = hashStr(`lvl_${tileX}_${tileY}_${salt}`)
+  return min + (h % (max - min + 1))
+}
+
 /** Reescreve todo o continente (fora da Capital e fora da orla) no mosaico de
  *  biomas retangulares irregulares. Preserva água/orla, portais, escadas e
  *  qualquer tile já construído da cidade. */

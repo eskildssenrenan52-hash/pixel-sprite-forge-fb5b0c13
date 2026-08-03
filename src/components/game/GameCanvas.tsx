@@ -13,7 +13,7 @@ import {
   drawWetSurfaceReflection,
 } from '@/lib/game/lightingAndWeather'
 import { polishChunk } from '@/lib/game/mapPolish'
-import { preloadTileSheets } from '@/lib/game/tileSheets'
+import { preloadTileSheets, getTileSheetsVersion } from '@/lib/game/tileSheets'
 
 preloadTileSheets()
 
@@ -61,6 +61,7 @@ export default function GameCanvas({ gameState, onCanvasClick }: Props) {
     mapId: null,
     chunks: new Map(),
   })
+  const sheetsVersionRef = useRef(getTileSheetsVersion())
   const fxRef = useRef<FxState>({
     shake: 0, shakeMag: 0, rings: [], bursts: [],
     prevDmgIds: new Set(), prevLvlFlash: 0, prevPlayerHp: 0,
@@ -155,6 +156,11 @@ export default function GameCanvas({ gameState, onCanvasClick }: Props) {
       cache.chunks.clear()
       fx.monsterHitFlash.clear(); fx.prevMonsterHp.clear()
       fx.rings.length = 0; fx.bursts.length = 0
+    }
+    // Rebake dos chunks quando um tileset de IA termina de carregar
+    if (sheetsVersionRef.current !== getTileSheetsVersion()) {
+      sheetsVersionRef.current = getTileSheetsVersion()
+      cache.chunks.clear()
     }
 
     // Clear

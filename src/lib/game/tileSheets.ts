@@ -90,12 +90,19 @@ const TILE_VARIANTS: Record<string, Variant[]> = {
 }
 
 const imageCache = new Map<string, HTMLImageElement>()
+let sheetsVersion = 0
+
+/** Muda sempre que uma folha termina de carregar (para invalidar chunks). */
+export function getTileSheetsVersion() {
+  return sheetsVersion
+}
 
 function loadSheet(url: string): HTMLImageElement | null {
   if (typeof Image === 'undefined') return null
   let img = imageCache.get(url)
   if (!img) {
     img = new Image()
+    img.onload = () => { sheetsVersion++ }
     img.src = url
     imageCache.set(url, img)
   }

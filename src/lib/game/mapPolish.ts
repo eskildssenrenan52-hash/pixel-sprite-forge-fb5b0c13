@@ -9,6 +9,7 @@
 //   5. detalhes finos (grãos, pedriscos, folhas) espalhados no chão
 // ─────────────────────────────────────────────────────────────────────────────
 import { drawTile } from './sprites'
+import { getTileSheetsVersion } from './tileSheets'
 
 const TILE = 32
 

@@ -8,6 +8,9 @@ export type TileType =
   | 'tree' | 'rock' | 'chest' | 'portal'
   | 'dungeon_floor' | 'dungeon_wall' | 'dungeon_brick'
   | 'road' | 'bridge' | 'tall_grass' | 'flower'
+  // Novos tiles de bioma (tileset de IA)
+  | 'salt_flat' | 'bone_field' | 'mushroom_moss' | 'slime_pool' | 'tar_pit'
+  | 'mud' | 'scorched' | 'bush' | 'cactus'
   // City biome tiles
   | 'cobblestone' | 'house_wall' | 'house_roof' | 'house_door'
   | 'fountain' | 'lamp_post' | 'market_stall' | 'fence' | 'garden'

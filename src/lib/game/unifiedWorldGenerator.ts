@@ -185,6 +185,19 @@ function buildCuts(seed: number, axis: number): number[] {
   return cuts
 }
 
+/**
+ * CADEIA DE BIOMAS (estilo Rucoy Online).
+ * A ordem é a mesma da progressão de nível: cada bioma só pode encostar no
+ * bioma anterior e no seguinte da cadeia — ou seja, NENHUM bioma faz fronteira
+ * com mais de 2 biomas diferentes. Isso é garantido por construção: cada bloco
+ * do mosaico recebe um índice da cadeia e blocos vizinhos nunca diferem em
+ * mais de 1 índice.
+ */
+export const BIOME_CHAIN: BiomeKindId[] = [
+  'greenwood', 'plains', 'mirebog', 'goldsands',
+  'ruins', 'frostreach', 'crystal', 'emberwaste',
+]
+
 let cutsCache: { seed: number; xs: number[]; ys: number[]; grid: BiomeKindId[][] } | null = null
 
 function getMosaic(seed: number) {
@@ -193,28 +206,48 @@ function getMosaic(seed: number) {
   const ys = buildCuts(seed, 1)
   const cols = xs.length - 1
   const rows = ys.length - 1
-  const grid: BiomeKindId[][] = []
+  const maxIdx = BIOME_CHAIN.length - 1
+
+  // 1) Campo escalar: cresce de forma irregular a partir do bloco central
+  //    (a Capital fica no bioma inicial da cadeia, como em Rucoy).
+  const cCenter = (cols - 1) / 2
+  const rCenter = (rows - 1) / 2
+  const maxDist = Math.max(1, Math.hypot(cCenter, rCenter))
+  const level: number[][] = []
   for (let r = 0; r < rows; r++) {
-    grid.push([])
+    level.push([])
     for (let c = 0; c < cols; c++) {
-      const banned = new Set<BiomeKindId>()
-      // no máximo 2 blocos iguais conectados em linha
-      if (c >= 2 && grid[r][c - 1] === grid[r][c - 2]) banned.add(grid[r][c - 1])
-      // no máximo 2 blocos iguais conectados em coluna
-      if (r >= 2 && grid[r - 1][c] === grid[r - 2][c]) banned.add(grid[r - 1][c])
-      // evita blocos 2x2 do mesmo bioma (aglomerado > 2)
-      if (r >= 1 && c >= 1 && grid[r - 1][c] === grid[r - 1][c - 1] && grid[r][c - 1] === grid[r - 1][c]) {
-        banned.add(grid[r][c - 1])
-      }
-      const base = Math.floor(pseudoNoise(c * 17 + 3, r * 23 + 5, seed + 512) * BIOME_KINDS.length)
-      let pick = BIOME_KINDS[base % BIOME_KINDS.length].id
-      let k = 0
-      while (banned.has(pick) && k < BIOME_KINDS.length) {
-        pick = BIOME_KINDS[(base + ++k) % BIOME_KINDS.length].id
-      }
-      grid[r][c] = pick
+      const dist = Math.hypot(c - cCenter, r - rCenter) / maxDist
+      const jitter = (pseudoNoise(c * 17 + 3, r * 23 + 5, seed + 512) - 0.5) * 0.42
+      const v = Math.min(1, Math.max(0, dist + jitter))
+      level[r][c] = Math.round(v * maxIdx)
     }
   }
+
+  // 2) Relaxação: blocos vizinhos nunca diferem em mais de 1 índice da cadeia.
+  //    Garante grau <= 2 de vizinhança para todo bioma.
+  for (let pass = 0; pass < 24; pass++) {
+    let changed = false
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const neigh = [
+          level[r][c - 1], level[r][c + 1],
+          level[r - 1]?.[c], level[r + 1]?.[c],
+          level[r - 1]?.[c - 1], level[r - 1]?.[c + 1],
+          level[r + 1]?.[c - 1], level[r + 1]?.[c + 1],
+        ].filter((v): v is number => typeof v === 'number')
+        for (const n of neigh) {
+          if (level[r][c] - n > 1) { level[r][c] = n + 1; changed = true }
+          else if (n - level[r][c] > 1) { level[r][c] = n - 1; changed = true }
+        }
+      }
+    }
+    if (!changed) break
+  }
+
+  const grid: BiomeKindId[][] = level.map(row =>
+    row.map(v => BIOME_CHAIN[Math.min(maxIdx, Math.max(0, v))]),
+  )
   cutsCache = { seed, xs, ys, grid }
   return cutsCache
 }

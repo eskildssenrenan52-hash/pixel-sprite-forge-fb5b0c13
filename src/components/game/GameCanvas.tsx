@@ -13,6 +13,9 @@ import {
   drawWetSurfaceReflection,
 } from '@/lib/game/lightingAndWeather'
 import { polishChunk } from '@/lib/game/mapPolish'
+import { preloadTileSheets } from '@/lib/game/tileSheets'
+
+preloadTileSheets()
 
 const TILE = 32
 const CHUNK_TILES = 20

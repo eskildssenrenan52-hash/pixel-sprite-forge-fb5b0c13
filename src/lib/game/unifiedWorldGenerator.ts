@@ -421,6 +421,52 @@ function applyFourGreatLands(tiles: Tile[][], seed: number) {
         else if (d > 0.20) t = 'rock'
         else if (d < -0.18) t = 'dirt'
         else t = 'ruin_floor'
+      } else if (land === 'bloomvale') {
+        // VALE FLORIDO — campos de flores, bosques leves e riachos
+        const brook = Math.abs(dy + Math.sin(x * 0.05) * 18) < 1.2
+        if (brook) t = 'water'
+        else if (d > 0.24) t = 'tree'
+        else if (d > 0.10) t = 'flower'
+        else if (m > 0.16) t = 'tall_grass'
+        else if (d < -0.20) t = 'bush'
+        else t = 'grass'
+      } else if (land === 'jungle') {
+        // SELVA UMBROSA — vegetação fechada, cogumelos e poças escuras
+        if (m > 0.10 && d > 0.00) t = 'tree'
+        else if (d > 0.20) t = 'ancient_bark'
+        else if (d > 0.05) t = 'tall_grass'
+        else if (m < -0.20) t = 'dark_water'
+        else if (d < -0.22) t = 'mushroom'
+        else if (d < -0.10) t = 'mushroom_moss'
+        else t = 'grass'
+      } else if (land === 'saltflats') {
+        // SALINAS BRANCAS — crostas de sal, poças rasas e cactos secos
+        if (m < -0.22 && d < -0.05) t = 'water'
+        else if (d > 0.22) t = 'rock'
+        else if (d > 0.10) t = 'cactus'
+        else if (d < -0.18) t = 'sand'
+        else t = 'salt_flat'
+      } else if (land === 'boneyard') {
+        // NECRÓPOLE DE OSSOS — campos de ossadas, lápides e piche
+        if (m < -0.20 && d < 0.00) t = 'tar_pit'
+        else if (d > 0.24) t = 'ruin_pillar'
+        else if (d > 0.12) t = 'rock'
+        else if (d < -0.20) t = 'broken_tile'
+        else t = 'bone_field'
+      } else if (land === 'slagfields') {
+        // PLANALTO DE ESCÓRIA — terra calcinada, lodo tóxico e obsidiana
+        if (m < -0.20 && d < 0.02) t = 'slime_pool'
+        else if (d > 0.24) t = 'obsidian'
+        else if (d > 0.10) t = 'volcanic_rock'
+        else if (d < -0.18) t = 'ash'
+        else t = 'scorched'
+      } else if (land === 'voidlands') {
+        // ERMO DO VAZIO — fendas do vazio, cristais negros e ruínas flutuantes
+        if (m > 0.20 && d > 0.05) t = 'dark_crystal'
+        else if (d > 0.22) t = 'crystal'
+        else if (m < -0.22) t = 'void'
+        else if (d < -0.20) t = 'mushroom_moss'
+        else t = 'abyss_floor'
       } else {
         // ERMO CRISTALINO — planaltos pálidos com veios de cristal
         if (d > 0.24) t = 'crystal'

@@ -37,7 +37,8 @@ const avgCache = new Map<string, { r: number; g: number; b: number; a: number } 
 let scratch: HTMLCanvasElement | null = null
 
 export function avgColorOfType(type: string) {
-  if (avgCache.has(type)) return avgCache.get(type)
+  const key = `${type}#${getTileSheetsVersion()}`
+  if (avgCache.has(key)) return avgCache.get(key)
   if (typeof document === 'undefined') return null
   try {
     if (!scratch) {
@@ -57,10 +58,10 @@ export function avgColorOfType(type: string) {
       r += d[i] * al; g += d[i + 1] * al; b += d[i + 2] * al; a += al; n++
     }
     const res = n === 0 ? null : { r: r / a, g: g / a, b: b / a, a: a / n }
-    avgCache.set(type, res)
+    avgCache.set(key, res)
     return res
   } catch {
-    avgCache.set(type, null)
+    avgCache.set(key, null)
     return null
   }
 }

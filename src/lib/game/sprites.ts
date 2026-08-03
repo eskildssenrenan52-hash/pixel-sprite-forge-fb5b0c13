@@ -3,6 +3,7 @@ import type { CharacterClass, Direction, MonsterType, TileType, MinionType } fro
 import { drawExtendedMonster } from './extendedSprites'
 import { isExtendedType } from './extendedMonsters'
 import { classFrame, skinFrame, drawSheetSprite, loadSheetImage, TRAINING_DUMMY_URL } from './spriteSheets'
+import { drawTileSprite } from './tileSheets'
 
 const S = 32 // tile size
 
@@ -34,6 +35,12 @@ export function drawTile(
 ) {
   ctx.save()
   ctx.translate(x, y)
+
+  // Tileset de pixel art gerado por IA (com variação determinística por posição).
+  if (drawTileSprite(ctx, type, Math.round(x / S), Math.round(y / S), S)) {
+    ctx.restore()
+    return
+  }
 
   switch (type) {
     case 'grass':

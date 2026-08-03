@@ -157,9 +157,11 @@ export const GREAT_LANDS = [
 export type BiomeKindId =
   | 'greenwood' | 'goldsands' | 'frostreach' | 'emberwaste'
   | 'mirebog' | 'plains' | 'ruins' | 'crystal'
+  | 'bloomvale' | 'jungle' | 'saltflats' | 'boneyard' | 'slagfields' | 'voidlands'
 
 export const BIOME_KINDS: { id: BiomeKindId; name: string; weather: WeatherType }[] = [
   { id: 'greenwood',  name: 'Bosque Esmeralda',  weather: 'rain' },
+  { id: 'bloomvale',  name: 'Vale Florido',      weather: 'none' },
   { id: 'goldsands',  name: 'Dunas Douradas',    weather: 'sandstorm' },
   { id: 'frostreach', name: 'Confins Gelados',   weather: 'snow' },
   { id: 'emberwaste', name: 'Ermos de Brasa',    weather: 'ash_fall' },
@@ -167,6 +169,11 @@ export const BIOME_KINDS: { id: BiomeKindId; name: string; weather: WeatherType 
   { id: 'plains',     name: 'Campos Abertos',    weather: 'none' },
   { id: 'ruins',      name: 'Ruínas Antigas',    weather: 'none' },
   { id: 'crystal',    name: 'Ermo Cristalino',   weather: 'aurora' },
+  { id: 'jungle',     name: 'Selva Umbrosa',     weather: 'rain' },
+  { id: 'saltflats',  name: 'Salinas Brancas',   weather: 'sandstorm' },
+  { id: 'boneyard',   name: 'Necrópole de Ossos', weather: 'fog' },
+  { id: 'slagfields', name: 'Planalto de Escória', weather: 'ash_fall' },
+  { id: 'voidlands',  name: 'Ermo do Vazio',     weather: 'storm' },
 ]
 
 /** Cortes irregulares do tabuleiro (blocos ~40-58 tiles). */
@@ -194,8 +201,9 @@ function buildCuts(seed: number, axis: number): number[] {
  * mais de 1 índice.
  */
 export const BIOME_CHAIN: BiomeKindId[] = [
-  'greenwood', 'plains', 'mirebog', 'goldsands',
-  'ruins', 'frostreach', 'crystal', 'emberwaste',
+  'greenwood', 'bloomvale', 'plains', 'jungle', 'mirebog',
+  'goldsands', 'saltflats', 'ruins', 'boneyard',
+  'frostreach', 'crystal', 'slagfields', 'emberwaste', 'voidlands',
 ]
 
 let cutsCache: { seed: number; xs: number[]; ys: number[]; grid: BiomeKindId[][] } | null = null
@@ -289,13 +297,19 @@ export function getGreatLandAt(tileX: number, tileY: number) {
 // ─────────────────────────────────────────────────────────────────────────────
 export const BIOME_LEVEL_RANGES: Record<BiomeKindId, { min: number; max: number }> = {
   greenwood:  { min: 1,   max: 5 },
-  plains:     { min: 6,   max: 12 },
-  mirebog:    { min: 13,  max: 22 },
-  goldsands:  { min: 23,  max: 35 },
-  ruins:      { min: 36,  max: 52 },
-  frostreach: { min: 53,  max: 72 },
-  crystal:    { min: 73,  max: 95 },
-  emberwaste: { min: 96,  max: 125 },
+  bloomvale:  { min: 6,   max: 10 },
+  plains:     { min: 11,  max: 16 },
+  jungle:     { min: 17,  max: 24 },
+  mirebog:    { min: 25,  max: 34 },
+  goldsands:  { min: 35,  max: 46 },
+  saltflats:  { min: 47,  max: 58 },
+  ruins:      { min: 59,  max: 72 },
+  boneyard:   { min: 73,  max: 88 },
+  frostreach: { min: 89,  max: 106 },
+  crystal:    { min: 107, max: 126 },
+  slagfields: { min: 127, max: 148 },
+  emberwaste: { min: 149, max: 172 },
+  voidlands:  { min: 173, max: 200 },
 }
 
 /** Faixa fixa de nível do bioma numa posição do mundo. */
@@ -407,6 +421,52 @@ function applyFourGreatLands(tiles: Tile[][], seed: number) {
         else if (d > 0.20) t = 'rock'
         else if (d < -0.18) t = 'dirt'
         else t = 'ruin_floor'
+      } else if (land === 'bloomvale') {
+        // VALE FLORIDO — campos de flores, bosques leves e riachos
+        const brook = Math.abs(dy + Math.sin(x * 0.05) * 18) < 1.2
+        if (brook) t = 'water'
+        else if (d > 0.24) t = 'tree'
+        else if (d > 0.10) t = 'flower'
+        else if (m > 0.16) t = 'tall_grass'
+        else if (d < -0.20) t = 'bush'
+        else t = 'grass'
+      } else if (land === 'jungle') {
+        // SELVA UMBROSA — vegetação fechada, cogumelos e poças escuras
+        if (m > 0.10 && d > 0.00) t = 'tree'
+        else if (d > 0.20) t = 'ancient_bark'
+        else if (d > 0.05) t = 'tall_grass'
+        else if (m < -0.20) t = 'dark_water'
+        else if (d < -0.22) t = 'mushroom'
+        else if (d < -0.10) t = 'mushroom_moss'
+        else t = 'grass'
+      } else if (land === 'saltflats') {
+        // SALINAS BRANCAS — crostas de sal, poças rasas e cactos secos
+        if (m < -0.22 && d < -0.05) t = 'water'
+        else if (d > 0.22) t = 'rock'
+        else if (d > 0.10) t = 'cactus'
+        else if (d < -0.18) t = 'sand'
+        else t = 'salt_flat'
+      } else if (land === 'boneyard') {
+        // NECRÓPOLE DE OSSOS — campos de ossadas, lápides e piche
+        if (m < -0.20 && d < 0.00) t = 'tar_pit'
+        else if (d > 0.24) t = 'ruin_pillar'
+        else if (d > 0.12) t = 'rock'
+        else if (d < -0.20) t = 'broken_tile'
+        else t = 'bone_field'
+      } else if (land === 'slagfields') {
+        // PLANALTO DE ESCÓRIA — terra calcinada, lodo tóxico e obsidiana
+        if (m < -0.20 && d < 0.02) t = 'slime_pool'
+        else if (d > 0.24) t = 'obsidian'
+        else if (d > 0.10) t = 'volcanic_rock'
+        else if (d < -0.18) t = 'ash'
+        else t = 'scorched'
+      } else if (land === 'voidlands') {
+        // ERMO DO VAZIO — fendas do vazio, cristais negros e ruínas flutuantes
+        if (m > 0.20 && d > 0.05) t = 'dark_crystal'
+        else if (d > 0.22) t = 'crystal'
+        else if (m < -0.22) t = 'void'
+        else if (d < -0.20) t = 'mushroom_moss'
+        else t = 'abyss_floor'
       } else {
         // ERMO CRISTALINO — planaltos pálidos com veios de cristal
         if (d > 0.24) t = 'crystal'

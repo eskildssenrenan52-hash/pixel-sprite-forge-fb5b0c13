@@ -470,16 +470,107 @@ function paintBiomeTile(land: BiomeKindId, x: number, y: number, seed: number): 
         else if (m < -0.22) t = 'void'
         else if (d < -0.20) t = 'mushroom_moss'
         else t = 'abyss_floor'
+      } else if (land === 'farmsteads') {
+        // CAMPOS DE COLHEITA — lavouras, cercas vivas e trilhas de terra
+        const field = (Math.floor(x / 18) + Math.floor(y / 18)) % 2 === 0
+        const lane = x % 18 < 2 || y % 18 < 2
+        if (lane) t = 'dirt'
+        else if (field && d > 0.16) t = 'bush'
+        else if (field) t = 'farmland'
+        else if (d > 0.24) t = 'tree'
+        else if (d < -0.20) t = 'clover'
+        else t = 'grass'
+      } else if (land === 'savanna') {
+        // SAVANA DOURADA — capim seco, acácias esparsas e poças de barro
+        if (m < -0.24 && d < -0.06) t = 'water'
+        else if (d > 0.26) t = 'tree'
+        else if (d > 0.12) t = 'dry_grass'
+        else if (d < -0.22) t = 'dirt'
+        else if (m > 0.18) t = 'autumn_grass'
+        else t = 'dry_grass'
+      } else if (land === 'redcanyon') {
+        // DESFILADEIRO RUBRO — mesas de rocha vermelha e fendas de areia
+        const ridge = Math.abs(Math.sin(x * 0.045 + y * 0.03)) > 0.90
+        if (ridge && d > -0.05) t = 'rock'
+        else if (d > 0.22) t = 'red_rock'
+        else if (d > 0.06) t = 'gravel'
+        else if (m < -0.22) t = 'sand'
+        else if (d < -0.20) t = 'cactus'
+        else t = 'red_rock'
+      } else if (land === 'catacombs') {
+        // CATACUMBAS ABERTAS — corredores de pedra escura e tumbas
+        const hall = (x % 14 < 9) && (y % 14 < 9)
+        if (hall && (x % 14 === 0 || y % 14 === 0)) t = 'ruin_pillar'
+        else if (hall && d > 0.18) t = 'gravestone'
+        else if (hall) t = 'catacomb_floor'
+        else if (d > 0.22) t = 'rock'
+        else if (d < -0.20) t = 'bone_gravel'
+        else t = 'dungeon_floor'
+      } else if (land === 'aurora') {
+        // CAMPOS DA AURORA — gelo iridescente e pinheiros congelados
+        if (m < -0.20 && d < 0.05) t = 'aurora_ice'
+        else if (d > 0.24) t = 'frozen_tree'
+        else if (d > 0.10) t = 'ice_crystal_node'
+        else if (d < -0.20) t = 'snow'
+        else t = 'aurora_ice'
+      } else if (land === 'sulfurpits') {
+        // FOSSAS DE ENXOFRE — crostas amarelas e lodo tóxico
+        if (m < -0.20 && d < 0.02) t = 'toxic_sludge'
+        else if (d > 0.24) t = 'basalt'
+        else if (d > 0.10) t = 'rock'
+        else if (d < -0.20) t = 'slime_pool'
+        else t = 'sulfur'
       } else {
         // ERMO CRISTALINO — planaltos pálidos com veios de cristal
         if (d > 0.24) t = 'crystal'
         else if (d > 0.10) t = 'rock'
-        else if (m < -0.20) t = 'ice'
+        else if (m < -0.20) t = 'amethyst_floor'
         else if (d < -0.20) t = 'ice_crystal_node'
+        else if (m > 0.20) t = 'emerald_floor'
         else t = 'crystal_floor'
       }
+  return t
+}
 
-      tiles[y][x] = makeTile(t)
+/**
+ * Transição entre biomas: perto da fronteira os dois biomas se entrelaçam com
+ * um dithering guiado por ruído, criando uma faixa de mistura irregular
+ * (nada de linha reta entre um bioma e o vizinho).
+ */
+function paintWithTransition(x: number, y: number, seed: number): TileType {
+  const land = mosaicKindAt(x, y, seed)
+  const R = 4
+  let other: BiomeKindId | null = null
+  let near = 0
+  const probes: Array<[number, number]> = [[R, 0], [-R, 0], [0, R], [0, -R], [R, R], [-R, -R]]
+  for (const [ox, oy] of probes) {
+    const k = mosaicKindAt(x + ox, y + oy, seed)
+    if (k !== land) { other = k; near++ }
+  }
+  if (!other) return paintBiomeTile(land, x, y, seed)
+  // quanto mais sondas acusam o vizinho, mais perto da fronteira estamos
+  const closeness = near / probes.length
+  const n = fbm(x * 0.24, y * 0.24, 3, seed + 611)
+  const n2 = fbm(x * 0.08, y * 0.08, 2, seed + 977)
+  const mix = closeness * 0.9 + (n2 - 0.5) * 0.35
+  return n < mix
+    ? paintBiomeTile(other, x, y, seed)
+    : paintBiomeTile(land, x, y, seed)
+}
+
+function applyFourGreatLands(tiles: Tile[][], seed: number) {
+  const INNER = 30      // raio protegido da Capital
+  const OUTER = 196     // além disso é orla/oceano gerado organicamente
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const dx = x - CENTER
+      const dy = y - CENTER
+      const dist = Math.hypot(dx, dy)
+      if (dist < INNER || dist > OUTER) continue
+      const cur = tiles[y][x]
+      if (!cur || GREAT_LANDS_KEEP.has(cur.type)) continue
+      if (cur.type.includes('portal') && dist < 40) continue
+      tiles[y][x] = makeTile(paintWithTransition(x, y, seed))
     }
   }
 }

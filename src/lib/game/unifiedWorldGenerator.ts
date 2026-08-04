@@ -190,7 +190,7 @@ function buildCuts(seed: number, axis: number): number[] {
   let i = 0
   while (p < W - 24) {
     const r = pseudoNoise(i * 13 + axis * 91, axis * 7, seed + 31)
-    p += Math.round(40 + r * 20)
+    p += Math.round(30 + r * 18)
     if (p >= W) break
     cuts.push(p)
     i++

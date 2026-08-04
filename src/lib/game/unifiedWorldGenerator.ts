@@ -229,6 +229,8 @@ function getMosaic(seed: number) {
   const cCenter = (cols - 1) / 2
   const rCenter = (rows - 1) / 2
   const maxDist = Math.max(1, Math.hypot(cCenter, rCenter))
+  // anéis disponíveis do tabuleiro (cada anel é um degrau da progressão)
+  const RINGS = Math.max(2, Math.round(Math.max(cCenter, rCenter)))
   const level: number[][] = []
   for (let r = 0; r < rows; r++) {
     level.push([])
@@ -236,7 +238,7 @@ function getMosaic(seed: number) {
       const dist = Math.hypot(c - cCenter, r - rCenter) / maxDist
       const jitter = (pseudoNoise(c * 17 + 3, r * 23 + 5, seed + 512) - 0.5) * 0.42
       const v = Math.min(1, Math.max(0, dist + jitter))
-      level[r][c] = Math.round(v * maxIdx)
+      level[r][c] = Math.round(v * RINGS)
     }
   }
 
@@ -261,8 +263,14 @@ function getMosaic(seed: number) {
     if (!changed) break
   }
 
+  // Mapeia o anel (0..RINGS) para a cadeia inteira de biomas. Blocos vizinhos
+  // nunca diferem em mais de um anel, então nenhum bioma faz fronteira com
+  // mais de 2 biomas diferentes — mesmo quando o passo pula um elo da cadeia.
+  let maxLevel = 0
+  for (const row of level) for (const v of row) maxLevel = Math.max(maxLevel, v)
+  const span = Math.max(1, maxLevel)
   const grid: BiomeKindId[][] = level.map(row =>
-    row.map(v => BIOME_CHAIN[Math.min(maxIdx, Math.max(0, v))]),
+    row.map(v => BIOME_CHAIN[Math.min(maxIdx, Math.max(0, Math.round((v / span) * maxIdx)))]),
   )
   cutsCache = { seed, xs, ys, grid }
   return cutsCache

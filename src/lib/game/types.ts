@@ -11,6 +11,14 @@ export type TileType =
   // Novos tiles de bioma (tileset de IA)
   | 'salt_flat' | 'bone_field' | 'mushroom_moss' | 'slime_pool' | 'tar_pit'
   | 'mud' | 'scorched' | 'bush' | 'cactus'
+  // Tiles expandidos (tilesets verdant / stonework / arcane / flora)
+  | 'fern_grass' | 'autumn_grass' | 'clover' | 'dry_grass'
+  | 'jungle_floor' | 'vine_floor' | 'reed_marsh' | 'peat' | 'farmland'
+  | 'limestone' | 'marble' | 'mosaic' | 'gravel' | 'red_rock' | 'slate'
+  | 'basalt' | 'sulfur' | 'toxic_sludge' | 'catacomb_floor' | 'bone_gravel'
+  | 'aurora_ice' | 'amethyst_floor' | 'emerald_floor' | 'void_nebula'
+  | 'starfield' | 'ember_rock'
+  | 'sakura_tree' | 'dead_tree' | 'palm_tree' | 'jungle_tree' | 'gravestone'
   // City biome tiles
   | 'cobblestone' | 'house_wall' | 'house_roof' | 'house_door'
   | 'fountain' | 'lamp_post' | 'market_stall' | 'fence' | 'garden'

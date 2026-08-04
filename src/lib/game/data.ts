@@ -143,6 +143,7 @@ const NON_WALKABLE: TileType[] = [
   'pine_tree', 'snowy_peak', 'mountain_rock', 'ice_crystal_node',
   'ruin_pillar', 'vine_wall', 'sarcophagus', 'rune_stone', 'ancient_brazier',
   'tower_wall',
+  'sakura_tree', 'dead_tree', 'palm_tree', 'jungle_tree', 'gravestone',
 ]
 
 const TILE_CACHE: Partial<Record<TileType, Tile>> = {}

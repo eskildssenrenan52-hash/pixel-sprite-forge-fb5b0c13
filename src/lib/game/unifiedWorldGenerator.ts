@@ -158,6 +158,7 @@ export type BiomeKindId =
   | 'greenwood' | 'goldsands' | 'frostreach' | 'emberwaste'
   | 'mirebog' | 'plains' | 'ruins' | 'crystal'
   | 'bloomvale' | 'jungle' | 'saltflats' | 'boneyard' | 'slagfields' | 'voidlands'
+  | 'farmsteads' | 'savanna' | 'redcanyon' | 'catacombs' | 'aurora' | 'sulfurpits'
 
 export const BIOME_KINDS: { id: BiomeKindId; name: string; weather: WeatherType }[] = [
   { id: 'greenwood',  name: 'Bosque Esmeralda',  weather: 'rain' },
@@ -174,6 +175,12 @@ export const BIOME_KINDS: { id: BiomeKindId; name: string; weather: WeatherType 
   { id: 'boneyard',   name: 'Necrópole de Ossos', weather: 'fog' },
   { id: 'slagfields', name: 'Planalto de Escória', weather: 'ash_fall' },
   { id: 'voidlands',  name: 'Ermo do Vazio',     weather: 'storm' },
+  { id: 'farmsteads', name: 'Campos de Colheita', weather: 'none' },
+  { id: 'savanna',    name: 'Savana Dourada',    weather: 'none' },
+  { id: 'redcanyon',  name: 'Desfiladeiro Rubro', weather: 'sandstorm' },
+  { id: 'catacombs',  name: 'Catacumbas Abertas', weather: 'fog' },
+  { id: 'aurora',     name: 'Campos da Aurora',  weather: 'aurora' },
+  { id: 'sulfurpits', name: 'Fossas de Enxofre', weather: 'ash_fall' },
 ]
 
 /** Cortes irregulares do tabuleiro (blocos ~40-58 tiles). */
@@ -201,9 +208,10 @@ function buildCuts(seed: number, axis: number): number[] {
  * mais de 1 índice.
  */
 export const BIOME_CHAIN: BiomeKindId[] = [
-  'greenwood', 'bloomvale', 'plains', 'jungle', 'mirebog',
-  'goldsands', 'saltflats', 'ruins', 'boneyard',
-  'frostreach', 'crystal', 'slagfields', 'emberwaste', 'voidlands',
+  'greenwood', 'bloomvale', 'farmsteads', 'plains', 'savanna',
+  'jungle', 'mirebog', 'goldsands', 'redcanyon', 'saltflats',
+  'ruins', 'catacombs', 'boneyard', 'frostreach', 'aurora',
+  'crystal', 'sulfurpits', 'slagfields', 'emberwaste', 'voidlands',
 ]
 
 let cutsCache: { seed: number; xs: number[]; ys: number[]; grid: BiomeKindId[][] } | null = null

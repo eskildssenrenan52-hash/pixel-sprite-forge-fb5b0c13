@@ -349,21 +349,10 @@ const GREAT_LANDS_KEEP = new Set<TileType>([
   'cobblestone', 'house_wall', 'house_roof', 'house_door',
 ])
 
-function applyFourGreatLands(tiles: Tile[][], seed: number) {
-  const INNER = 30      // raio protegido da Capital
-  const OUTER = 196     // além disso é orla/oceano gerado organicamente
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
+/** Pinta o tile de um bioma específico numa posição. */
+function paintBiomeTile(land: BiomeKindId, x: number, y: number, seed: number): TileType {
       const dx = x - CENTER
       const dy = y - CENTER
-      const dist = Math.hypot(dx, dy)
-      if (dist < INNER || dist > OUTER) continue
-      const cur = tiles[y][x]
-      if (!cur || GREAT_LANDS_KEEP.has(cur.type)) continue
-      if (cur.type.includes('portal') && dist < 40) continue
-
-      const land = mosaicKindAt(x, y, seed)
-
       const d = fbm(x * 0.11, y * 0.11, 4, seed + 40) - 0.5   // detalhe fino
       const m = fbm(x * 0.028, y * 0.028, 3, seed + 91) - 0.5 // macro
       let t: TileType = 'grass'

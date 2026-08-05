@@ -11,6 +11,13 @@ import verdantSheet from '@/assets/tiles/tiles_verdant.png.asset.json'
 import stoneworkSheet from '@/assets/tiles/tiles_stonework.png.asset.json'
 import arcaneSheet from '@/assets/tiles/tiles_arcane.png.asset.json'
 import floraSheet from '@/assets/tiles/tiles_flora.png.asset.json'
+import meadowSheet from '@/assets/tiles/tiles_meadow.png.asset.json'
+import dunesSheet from '@/assets/tiles/tiles_dunes.png.asset.json'
+import glacierSheet from '@/assets/tiles/tiles_glacier.png.asset.json'
+import mireSheet from '@/assets/tiles/tiles_mire.png.asset.json'
+import infernalSheet from '@/assets/tiles/tiles_infernal.png.asset.json'
+import astralSheet from '@/assets/tiles/tiles_astral.png.asset.json'
+import ruinworksSheet from '@/assets/tiles/tiles_ruinworks.png.asset.json'
 
 export const TS_COLS = 4
 export const TS_ROWS = 4
@@ -25,6 +32,13 @@ const SHEETS = {
   s: stoneworkSheet.url,
   c: arcaneSheet.url,
   f: floraSheet.url,
+  m: meadowSheet.url,
+  d: dunesSheet.url,
+  i: glacierSheet.url,
+  r: mireSheet.url,
+  n: infernalSheet.url,
+  x: astralSheet.url,
+  u: ruinworksSheet.url,
 } as const
 
 type SheetKey = keyof typeof SHEETS
@@ -126,6 +140,127 @@ const TILE_VARIANTS: Record<string, Variant[]> = {
   cactus:       [['f', 13], ['o', 14]],
   ruin_pillar:  [['f', 14], ['o', 15]],
   gravestone:   [['f', 15], ['o', 15]],
+
+  // ══ 112 novos tiles de IA ══
+  // meadow
+  spring_grass:     [['m', 0], ['m', 12], ['m', 13]],
+  wildflower_field: [['m', 1], ['m', 13]],
+  wheat_field:      [['m', 2], ['m', 10]],
+  mossy_forest_floor:[['m', 3], ['m', 5]],
+  leaf_litter:      [['m', 4], ['m', 3]],
+  pine_floor:       [['m', 5], ['m', 4]],
+  bamboo_floor:     [['m', 6], ['m', 11]],
+  rice_paddy:       [['m', 7]],
+  hedge:            [['m', 8], ['m', 9]],
+  hedge_maze:       [['m', 9], ['m', 8]],
+  orchard:          [['m', 10], ['m', 11]],
+  vineyard:         [['m', 11], ['m', 10]],
+  wet_grass:        [['m', 12], ['m', 0]],
+  clover_patch:     [['m', 13], ['m', 1]],
+  bramble:          [['m', 14]],
+  jungle_mud:       [['m', 15], ['r', 15]],
+  // dunes
+  cracked_clay:     [['d', 0], ['d', 10]],
+  sandstone:        [['d', 1], ['d', 12]],
+  dune_ripple:      [['d', 2], ['d', 11]],
+  oasis_sand:       [['d', 3], ['d', 2]],
+  savanna_grass:    [['d', 4], ['d', 10]],
+  canyon_rock:      [['d', 5], ['d', 12]],
+  terracotta:       [['d', 6], ['d', 13]],
+  adobe_tile:       [['d', 7], ['d', 6]],
+  salt_crust:       [['d', 8]],
+  riverbed_pebbles: [['d', 9], ['d', 15]],
+  tumbleweed_dirt:  [['d', 10], ['d', 4]],
+  bleached_sand:    [['d', 11], ['d', 2]],
+  mesa_rock:        [['d', 12], ['d', 5]],
+  sandstone_brick:  [['d', 13], ['d', 1]],
+  desert_road:      [['d', 14], ['d', 9]],
+  sandy_gravel:     [['d', 15], ['d', 9]],
+  // glacier
+  deep_snow:        [['i', 0], ['i', 8]],
+  snow_trail:       [['i', 1], ['i', 12]],
+  glacier_ice:      [['i', 2], ['i', 3]],
+  cracked_ice:      [['i', 3], ['i', 2]],
+  frozen_lake:      [['i', 4], ['i', 3]],
+  tundra_moss:      [['i', 5], ['i', 10]],
+  frost_stone:      [['i', 6], ['i', 14]],
+  icy_gravel:       [['i', 7], ['i', 15]],
+  powder_snow:      [['i', 8], ['i', 0]],
+  aurora_snow:      [['i', 9], ['i', 0]],
+  frozen_mud:       [['i', 10], ['i', 5]],
+  hail_ice:         [['i', 11], ['i', 7]],
+  snowy_cobble:     [['i', 12], ['i', 1]],
+  ice_brick:        [['i', 13], ['i', 2]],
+  rime_rock:        [['i', 14], ['i', 6]],
+  slush:            [['i', 15], ['i', 10]],
+  // mire
+  swamp_water:      [['r', 0], ['r', 13]],
+  bog_peat:         [['r', 1], ['r', 15]],
+  lilypad_water:    [['r', 2], ['r', 0]],
+  rotting_log:      [['r', 3], ['r', 6]],
+  marsh_reeds:      [['r', 4], ['r', 0]],
+  poison_sludge:    [['r', 5], ['r', 13]],
+  mangrove_roots:   [['r', 6], ['r', 3]],
+  damp_moss:        [['r', 7], ['r', 1]],
+  spore_floor:      [['r', 8], ['r', 9]],
+  mushroom_cap:     [['r', 9], ['r', 8]],
+  web_floor:        [['r', 10], ['r', 11]],
+  dark_canopy_floor:[['r', 11], ['r', 7]],
+  quicksand:        [['r', 12], ['r', 15]],
+  algae_pond:       [['r', 13], ['r', 5]],
+  tar_pool:         [['r', 14], ['r', 1]],
+  wet_clay:         [['r', 15], ['r', 12]],
+  // infernal
+  black_ash:        [['n', 0], ['n', 7]],
+  magma_cracks:     [['n', 1], ['n', 11]],
+  basalt_columns:   [['n', 2], ['n', 15]],
+  obsidian_glass:   [['n', 3], ['n', 2]],
+  ember_field:      [['n', 4], ['n', 9]],
+  lava_flow:        [['n', 5], ['n', 1]],
+  sulfur_crust:     [['n', 6], ['n', 12]],
+  charcoal_ground:  [['n', 7], ['n', 0]],
+  pumice:           [['n', 8], ['n', 15]],
+  cinder_rock:      [['n', 9], ['n', 4]],
+  slag_heap:        [['n', 10], ['n', 9]],
+  lava_plate:       [['n', 11], ['n', 1]],
+  brimstone:        [['n', 12], ['n', 6]],
+  steam_vent:       [['n', 13], ['n', 8]],
+  hot_iron_plate:   [['n', 14], ['n', 10]],
+  soot_stone:       [['n', 15], ['n', 2]],
+  // astral
+  blue_crystal_floor:[['x', 0], ['x', 13]],
+  amethyst_shard:   [['x', 1], ['x', 13]],
+  emerald_crystal:  [['x', 2], ['x', 0]],
+  rose_quartz:      [['x', 3], ['x', 1]],
+  rune_circle:      [['x', 4], ['x', 11]],
+  starfield_void:   [['x', 5], ['x', 6]],
+  nebula_void:      [['x', 6], ['x', 5]],
+  abyss_pit:        [['x', 7], ['x', 12]],
+  soulfire_ground:  [['x', 8], ['x', 12]],
+  celestial_cloud:  [['x', 9], ['x', 15]],
+  holy_tile:        [['x', 10], ['x', 15]],
+  leyline_floor:    [['x', 11], ['x', 4]],
+  shadow_mist:      [['x', 12], ['x', 7]],
+  geode_floor:      [['x', 13], ['x', 0]],
+  meteor_rock:      [['x', 14], ['x', 7]],
+  sky_stone:        [['x', 15], ['x', 9]],
+  // ruinworks
+  dungeon_flagstone:[['u', 0], ['u', 1]],
+  catacomb_crack:   [['u', 1], ['u', 14]],
+  bone_floor:       [['u', 2], ['u', 1]],
+  temple_mosaic:    [['u', 3], ['u', 4]],
+  marble_palace:    [['u', 4], ['u', 3]],
+  wood_plank:       [['u', 5]],
+  iron_grate:       [['u', 6], ['u', 7]],
+  rusty_plate:      [['u', 7], ['u', 6]],
+  brick_road:       [['u', 8], ['u', 9]],
+  plaza_cobble:     [['u', 9], ['u', 8]],
+  rune_slab:        [['u', 10], ['u', 15]],
+  mine_rail:        [['u', 11], ['u', 14]],
+  gold_vein_rock:   [['u', 12], ['u', 13]],
+  iron_vein_rock:   [['u', 13], ['u', 12]],
+  rubble:           [['u', 14], ['u', 1]],
+  mossy_brick:      [['u', 15], ['u', 9]],
 }
 
 const imageCache = new Map<string, HTMLImageElement>()

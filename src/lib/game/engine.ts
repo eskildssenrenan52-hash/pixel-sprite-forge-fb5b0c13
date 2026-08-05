@@ -21,7 +21,8 @@ import { getMasteryStats, upgradeMasteryNode } from './masterySystem'
 import { addPetXp, createPet, addPetToParty, getActivePet, getActivePetBonuses } from './petSystem'
 import { updateAchievementProgress, unlockAchievement } from './advancedAchievements'
 import { CITY2_PORTAL_COORDS, CITY2_CX, CITY2_CY, CITY2_BIOMES } from './city2Biomes'
-import { getBiomeSpawnPosition, OPEN_WORLD_REGIONS } from './unifiedWorldGenerator'
+import { getBiomeSpawnPosition, OPEN_WORLD_REGIONS, getBiomeKindAt, DEEP_BIOME_KINDS } from './unifiedWorldGenerator'
+import { DEEP_FLOORS_PER_BIOME } from './biomeFloorsEngine'
 import { find100Biome } from './new100Biomes'
 import { updatePhysicsObjects } from './physicsEngine'
 import { updateDynamicEvents } from './dynamicEvents'
@@ -1282,7 +1283,11 @@ export function getPortalTargetForLocation(
       if (stepTile === 'haunted_portal') return 'infinite_dungeon_f1'
       if (stepTile === 'dungeon_portal') return 'masmorra1'
       if (stepTile === 'tower_portal') return 'arena'
-      if (stepTile === 'stairs_down') return 'dungeon1'
+      if (stepTile === 'stairs_down') {
+        const kind = getBiomeKindAt(ptx, pty)
+        if (DEEP_BIOME_KINDS.has(kind)) return `deep_${kind}_1`
+        return 'dungeon1'
+      }
       if (stepTile === 'sky_portal') return 'portal_hall'
 
       // Check Capital Real Plaza 8 Portals
@@ -1426,6 +1431,14 @@ export function getPortalTargetForLocation(
 
   if (isForward) {
     // --- GOING DEEPER / NEXT FLOOR ---
+
+    // A0) Biomas profundos do mundo unificado (5 andares)
+    const deepMatch = mapId.match(/^deep_([a-z]+)_(\d+)$/)
+    if (deepMatch) {
+      const floor = parseInt(deepMatch[2], 10) || 1
+      if (floor < DEEP_FLOORS_PER_BIOME) return `deep_${deepMatch[1]}_${floor + 1}`
+      return 'unified_world'
+    }
 
     // A) City 2 Biomes (c2_<biome>_1 or c2_<biome>_2)
     const c2Match = mapId.match(/^c2_([a-z0-9]+)_(\d+)$/)

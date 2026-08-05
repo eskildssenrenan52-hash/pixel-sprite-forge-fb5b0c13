@@ -18,6 +18,7 @@ import { generateTempleBlessingsMap, generateInfiniteDungeonMap, generateCelesti
 import { generateUnifiedWorld, OPEN_WORLD_REGIONS } from './unifiedWorldGenerator'
 import { generate100BiomeMap, generate100FloorDungeonMap, ensureMapAccessibility, find100Biome } from './new100Biomes'
 import { generatePortalHallMap, generateContinentMap, generateIslandFloorMap } from './continentsSystem'
+import { generateDeepBiomeMap } from './biomeFloorsEngine'
 
 import { getExtendedDef, buildExtendedMonsterFromDef, isExtendedType, EXTENDED_MONSTERS, WORLD_BOSSES, type BiomeTag } from './extendedMonsters'
 
@@ -144,6 +145,11 @@ const NON_WALKABLE: TileType[] = [
   'ruin_pillar', 'vine_wall', 'sarcophagus', 'rune_stone', 'ancient_brazier',
   'tower_wall',
   'sakura_tree', 'dead_tree', 'palm_tree', 'jungle_tree', 'gravestone',
+  // novos tiles sólidos / perigosos
+  'hedge', 'hedge_maze', 'bramble', 'basalt_columns', 'lava_flow', 'tar_pool',
+  'abyss_pit', 'meteor_rock', 'rubble', 'gold_vein_rock', 'iron_vein_rock',
+  'canyon_rock', 'mesa_rock', 'sandstone_brick', 'ice_brick', 'rime_rock',
+  'hot_iron_plate', 'iron_grate', 'mushroom_cap', 'frozen_lake',
 ]
 
 const TILE_CACHE: Partial<Record<TileType, Tile>> = {}
@@ -219,6 +225,11 @@ export function generateMap(id: string): GameMap {
   }
 
   // 100 Biomes (Floors 1..10 for each) Routing
+  if (!map) {
+    const deep = generateDeepBiomeMap(id)
+    if (deep) map = deep
+  }
+
   if (!map) {
     const biomeDef = find100Biome(id)
     if (biomeDef) {

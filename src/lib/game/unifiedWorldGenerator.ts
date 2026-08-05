@@ -159,6 +159,9 @@ export type BiomeKindId =
   | 'mirebog' | 'plains' | 'ruins' | 'crystal'
   | 'bloomvale' | 'jungle' | 'saltflats' | 'boneyard' | 'slagfields' | 'voidlands'
   | 'farmsteads' | 'savanna' | 'redcanyon' | 'catacombs' | 'aurora' | 'sulfurpits'
+  // ── 10 novos biomas (cada um com 5 andares de profundidade) ──
+  | 'meadowlands' | 'orchardvale' | 'bamboogrove' | 'sporecaves' | 'oasisbasin'
+  | 'claylands' | 'templeruins' | 'glacierrift' | 'astralfields' | 'obsidianwastes'
 
 export const BIOME_KINDS: { id: BiomeKindId; name: string; weather: WeatherType }[] = [
   { id: 'greenwood',  name: 'Bosque Esmeralda',  weather: 'rain' },
@@ -181,6 +184,16 @@ export const BIOME_KINDS: { id: BiomeKindId; name: string; weather: WeatherType 
   { id: 'catacombs',  name: 'Catacumbas Abertas', weather: 'fog' },
   { id: 'aurora',     name: 'Campos da Aurora',  weather: 'aurora' },
   { id: 'sulfurpits', name: 'Fossas de Enxofre', weather: 'ash_fall' },
+  { id: 'meadowlands',    name: 'Prados Floridos',     weather: 'none' },
+  { id: 'orchardvale',    name: 'Vale dos Pomares',    weather: 'rain' },
+  { id: 'bamboogrove',    name: 'Bosque de Bambu',     weather: 'rain' },
+  { id: 'sporecaves',     name: 'Grutas de Esporos',   weather: 'fog' },
+  { id: 'oasisbasin',     name: 'Bacia do Oásis',      weather: 'none' },
+  { id: 'claylands',      name: 'Terras de Argila',    weather: 'sandstorm' },
+  { id: 'templeruins',    name: 'Ruínas do Templo',    weather: 'none' },
+  { id: 'glacierrift',    name: 'Fenda Glacial',       weather: 'snow' },
+  { id: 'astralfields',   name: 'Campos Astrais',      weather: 'aurora' },
+  { id: 'obsidianwastes', name: 'Ermos de Obsidiana',  weather: 'ash_fall' },
 ]
 
 /** Cortes irregulares do tabuleiro (blocos ~40-58 tiles). */
@@ -208,11 +221,24 @@ function buildCuts(seed: number, axis: number): number[] {
  * mais de 1 índice.
  */
 export const BIOME_CHAIN: BiomeKindId[] = [
-  'greenwood', 'bloomvale', 'farmsteads', 'plains', 'savanna',
-  'jungle', 'mirebog', 'goldsands', 'redcanyon', 'saltflats',
-  'ruins', 'catacombs', 'boneyard', 'frostreach', 'aurora',
-  'crystal', 'sulfurpits', 'slagfields', 'emberwaste', 'voidlands',
+  'greenwood', 'meadowlands', 'bloomvale', 'orchardvale', 'farmsteads',
+  'bamboogrove', 'plains', 'savanna', 'jungle', 'sporecaves',
+  'mirebog', 'oasisbasin', 'goldsands', 'claylands', 'redcanyon',
+  'saltflats', 'templeruins', 'ruins', 'catacombs', 'boneyard',
+  'frostreach', 'glacierrift', 'aurora', 'crystal', 'astralfields',
+  'sulfurpits', 'slagfields', 'obsidianwastes', 'emberwaste', 'voidlands',
 ]
+
+/** Biomas com 5 andares de profundidade (escadarias no mundo aberto). */
+export const DEEP_BIOME_KINDS = new Set<BiomeKindId>([
+  'meadowlands', 'orchardvale', 'bamboogrove', 'sporecaves', 'oasisbasin',
+  'claylands', 'templeruins', 'glacierrift', 'astralfields', 'obsidianwastes',
+])
+
+/** Bioma do mosaico numa posição do mundo (usado pelo motor de transições). */
+export function getBiomeKindAt(tileX: number, tileY: number): BiomeKindId {
+  return mosaicKindAt(tileX, tileY, 2026)
+}
 
 let cutsCache: { seed: number; xs: number[]; ys: number[]; grid: BiomeKindId[][] } | null = null
 
@@ -312,26 +338,36 @@ export function getGreatLandAt(tileX: number, tileY: number) {
 // NÍVEIS FIXOS POR BIOMA (a faixa não muda com a distância da Capital)
 // ─────────────────────────────────────────────────────────────────────────────
 export const BIOME_LEVEL_RANGES: Record<BiomeKindId, { min: number; max: number }> = {
-  greenwood:  { min: 1,   max: 5 },
-  bloomvale:  { min: 6,   max: 10 },
-  farmsteads: { min: 11,  max: 16 },
-  plains:     { min: 17,  max: 24 },
-  savanna:    { min: 25,  max: 33 },
-  jungle:     { min: 34,  max: 44 },
-  mirebog:    { min: 45,  max: 56 },
-  goldsands:  { min: 57,  max: 70 },
-  redcanyon:  { min: 71,  max: 85 },
-  saltflats:  { min: 86,  max: 101 },
-  ruins:      { min: 102, max: 118 },
-  catacombs:  { min: 119, max: 136 },
-  boneyard:   { min: 137, max: 155 },
-  frostreach: { min: 156, max: 175 },
-  aurora:     { min: 176, max: 196 },
-  crystal:    { min: 197, max: 218 },
-  sulfurpits: { min: 219, max: 241 },
-  slagfields: { min: 242, max: 265 },
-  emberwaste: { min: 266, max: 290 },
-  voidlands:  { min: 291, max: 320 },
+  greenwood:      { min: 1,   max: 5 },
+  meadowlands:    { min: 6,   max: 10 },
+  bloomvale:      { min: 11,  max: 16 },
+  orchardvale:    { min: 17,  max: 23 },
+  farmsteads:     { min: 24,  max: 31 },
+  bamboogrove:    { min: 32,  max: 40 },
+  plains:         { min: 41,  max: 50 },
+  savanna:        { min: 51,  max: 61 },
+  jungle:         { min: 62,  max: 73 },
+  sporecaves:     { min: 74,  max: 86 },
+  mirebog:        { min: 87,  max: 100 },
+  oasisbasin:     { min: 101, max: 115 },
+  goldsands:      { min: 116, max: 131 },
+  claylands:      { min: 132, max: 148 },
+  redcanyon:      { min: 149, max: 166 },
+  saltflats:      { min: 167, max: 185 },
+  templeruins:    { min: 186, max: 205 },
+  ruins:          { min: 206, max: 226 },
+  catacombs:      { min: 227, max: 248 },
+  boneyard:       { min: 249, max: 271 },
+  frostreach:     { min: 272, max: 295 },
+  glacierrift:    { min: 296, max: 320 },
+  aurora:         { min: 321, max: 346 },
+  crystal:        { min: 347, max: 373 },
+  astralfields:   { min: 374, max: 401 },
+  sulfurpits:     { min: 402, max: 430 },
+  slagfields:     { min: 431, max: 460 },
+  obsidianwastes: { min: 461, max: 491 },
+  emberwaste:     { min: 492, max: 523 },
+  voidlands:      { min: 524, max: 560 },
 }
 
 /** Faixa fixa de nível do bioma numa posição do mundo. */
@@ -361,6 +397,9 @@ const GREAT_LANDS_KEEP = new Set<TileType>([
 function paintBiomeTile(land: BiomeKindId, x: number, y: number, seed: number): TileType {
       const dx = x - CENTER
       const dy = y - CENTER
+      // Escadaria de profundidade: cada um dos 10 biomas novos tem entradas
+      // espalhadas que levam aos seus 5 andares.
+      if (DEEP_BIOME_KINDS.has(land) && x % 41 === 7 && y % 41 === 13) return 'stairs_down'
       const d = fbm(x * 0.11, y * 0.11, 4, seed + 40) - 0.5   // detalhe fino
       const m = fbm(x * 0.028, y * 0.028, 3, seed + 91) - 0.5 // macro
       let t: TileType = 'grass'
@@ -528,6 +567,90 @@ function paintBiomeTile(land: BiomeKindId, x: number, y: number, seed: number): 
         else if (d > 0.10) t = 'rock'
         else if (d < -0.20) t = 'slime_pool'
         else t = 'sulfur'
+      } else if (land === 'meadowlands') {
+        // PRADOS FLORIDOS — capim de primavera, flores silvestres e trevos
+        const brook = Math.abs(dy + Math.sin(x * 0.04) * 12) < 1.2
+        if (brook) t = 'wet_grass'
+        else if (d > 0.24) t = 'hedge'
+        else if (d > 0.10) t = 'wildflower_field'
+        else if (m > 0.16) t = 'clover_patch'
+        else if (d < -0.20) t = 'bramble'
+        else t = 'spring_grass'
+      } else if (land === 'orchardvale') {
+        // VALE DOS POMARES — pomares, parreirais e sebes
+        const row = Math.floor(x / 12) % 2 === 0
+        if (d > 0.26) t = 'hedge_maze'
+        else if (row && d > 0.05) t = 'orchard'
+        else if (!row && d > 0.02) t = 'vineyard'
+        else if (m < -0.22) t = 'wet_grass'
+        else if (d < -0.20) t = 'leaf_litter'
+        else t = 'spring_grass'
+      } else if (land === 'bamboogrove') {
+        // BOSQUE DE BAMBU — bambuzais densos, arrozais e mata de pinheiros
+        if (m > 0.14 && d > 0.02) t = 'bamboo_floor'
+        else if (m < -0.20) t = 'rice_paddy'
+        else if (d > 0.22) t = 'hedge'
+        else if (d > 0.08) t = 'bamboo_floor'
+        else if (d < -0.20) t = 'pine_floor'
+        else t = 'mossy_forest_floor'
+      } else if (land === 'sporecaves') {
+        // GRUTAS DE ESPOROS — esporos, cogumelos gigantes e teias
+        if (m < -0.20 && d < 0.02) t = 'algae_pond'
+        else if (d > 0.24) t = 'mushroom_cap'
+        else if (d > 0.08) t = 'spore_floor'
+        else if (d < -0.22) t = 'web_floor'
+        else if (m > 0.18) t = 'dark_canopy_floor'
+        else t = 'damp_moss'
+      } else if (land === 'oasisbasin') {
+        // BACIA DO OÁSIS — lagoas, areia úmida e leitos de rio
+        if (m < -0.18 && d < 0.04) t = 'oasis_sand'
+        else if (m < -0.26) t = 'water'
+        else if (d > 0.24) t = 'canyon_rock'
+        else if (d > 0.08) t = 'riverbed_pebbles'
+        else if (d < -0.20) t = 'savanna_grass'
+        else t = 'dune_ripple'
+      } else if (land === 'claylands') {
+        // TERRAS DE ARGILA — barro rachado, terracota e adobe
+        const village = (Math.floor(x / 26) + Math.floor(y / 26)) % 3 === 0
+        if (village && x % 26 < 10 && y % 26 < 10) t = (d > 0.10 ? 'adobe_tile' : 'terracotta')
+        else if (d > 0.24) t = 'sandstone_brick'
+        else if (d > 0.08) t = 'sandstone'
+        else if (m < -0.22) t = 'tumbleweed_dirt'
+        else if (d < -0.20) t = 'sandy_gravel'
+        else t = 'cracked_clay'
+      } else if (land === 'templeruins') {
+        // RUÍNAS DO TEMPLO — mosaicos, mármore e escombros
+        const hall = (x % 20 < 14) && (y % 20 < 14)
+        if (hall && (x % 20 === 0 || y % 20 === 0)) t = 'ruin_pillar'
+        else if (hall && d > 0.16) t = 'temple_mosaic'
+        else if (hall) t = 'marble_palace'
+        else if (d > 0.22) t = 'rubble'
+        else if (d < -0.20) t = 'mossy_brick'
+        else t = 'plaza_cobble'
+      } else if (land === 'glacierrift') {
+        // FENDA GLACIAL — geleiras rachadas, lagos congelados e granizo
+        if (m < -0.20 && d < 0.05) t = 'frozen_lake'
+        else if (d > 0.24) t = 'rime_rock'
+        else if (d > 0.10) t = 'glacier_ice'
+        else if (d < -0.22) t = 'hail_ice'
+        else if (m > 0.18) t = 'cracked_ice'
+        else t = 'deep_snow'
+      } else if (land === 'astralfields') {
+        // CAMPOS ASTRAIS — linhas de mana, geodos e névoa sombria
+        if (m > 0.20 && d > 0.05) t = 'geode_floor'
+        else if (d > 0.24) t = 'meteor_rock'
+        else if (d > 0.08) t = 'leyline_floor'
+        else if (m < -0.22) t = 'nebula_void'
+        else if (d < -0.20) t = 'soulfire_ground'
+        else t = 'rune_circle'
+      } else if (land === 'obsidianwastes') {
+        // ERMOS DE OBSIDIANA — colunas de basalto, brasas e escória
+        if (m < -0.20 && d < 0.02) t = 'lava_flow'
+        else if (d > 0.24) t = 'basalt_columns'
+        else if (d > 0.10) t = 'obsidian_glass'
+        else if (d < -0.22) t = 'ember_field'
+        else if (m > 0.18) t = 'slag_heap'
+        else t = 'black_ash'
       } else {
         // ERMO CRISTALINO — planaltos pálidos com veios de cristal
         if (d > 0.24) t = 'crystal'

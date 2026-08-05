@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import introAsset from '@/assets/intro_pixel.mp4.asset.json'
+import introWebm from '@/assets/intro_pixel.webm.asset.json'
 
 const SEEN_KEY = 'rucoy_intro_seen_v1'
 
@@ -47,18 +48,21 @@ export default function IntroVideo({ onFinish }: IntroVideoProps) {
     >
       <video
         ref={videoRef}
-        src={introAsset.url}
         muted
         playsInline
         autoPlay
         onEnded={finish}
+        onError={finish}
         style={{
           width: '100%',
           height: '100%',
           objectFit: 'cover',
           imageRendering: 'pixelated',
         }}
-      />
+      >
+        <source src={introWebm.url} type="video/webm" />
+        <source src={introAsset.url} type="video/mp4" />
+      </video>
       <div
         style={{
           position: 'absolute',

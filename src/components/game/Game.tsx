@@ -59,6 +59,7 @@ import PrestigePanel from './PrestigePanel'
 import SpecPanel from './SpecPanel'
 import SkillTreeModal from './SkillTreeModal'
 import GameLoader from './GameLoader'
+import IntroVideo from './IntroVideo'
 import Ambitious100FeaturesModal from './Ambitious100FeaturesModal'
 import SubskillsModal from './SubskillsModal'
 
@@ -176,6 +177,7 @@ export default function Game() {
   const [showContinents, setShowContinents] = useState(false)
   const [showSubskills, setShowSubskills] = useState(false)
   const [isMapLoading, setIsMapLoading] = useState(false)
+  const [showIntro, setShowIntro] = useState(true)
   const [loadingProgress, setLoadingProgress] = useState(100)
   const [loadingStatus, setLoadingStatus] = useState('')
   const [account, setAccount] = useState<UserAccount | null>(isLoggedIn() ? getCurrentAccount() : null)
@@ -776,6 +778,7 @@ export default function Game() {
 
   return (
     <div className="w-full h-full relative overflow-hidden" style={{ background: '#080a0e' }}>
+      {showIntro && <IntroVideo onFinish={() => setShowIntro(false)} />}
       {gameState.screen === 'title' ? (
         <TitleScreen onStart={handleStart} onLoad={handleLoad} />
       ) : (

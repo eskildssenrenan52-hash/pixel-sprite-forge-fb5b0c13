@@ -19,8 +19,9 @@ const ELITE_PREFIX: Record<EliteTier, string> = {
 
 const RANGED_TYPES: MonsterType[] = ['archer_enemy', 'mage_enemy', 'witch', 'ghost']
 
-const DIFF_HP = 5.0
-const DIFF_ATK = 4.0
+// Inimigos 3x mais fracos (era 5.0 / 4.0)
+const DIFF_HP = 5.0 / 3
+const DIFF_ATK = 4.0 / 3
 const DIFF_DEF = 2.5
 
 export function rollEliteTier(bossChance = 0): EliteTier {
